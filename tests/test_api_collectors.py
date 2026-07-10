@@ -59,6 +59,19 @@ def test_collect_xiaohongshu_normalizes_apify_items():
     assert records[0].keyword == "kitchen storage"
 
 
+def test_collect_xiaohongshu_accepts_slash_actor_names():
+    session = FakeSession([])
+
+    collect_xiaohongshu(
+        "kitchen storage",
+        "token",
+        "zhorex/rednote-xiaohongshu-scraper",
+        session=session,
+    )
+
+    assert "/zhorex~rednote-xiaohongshu-scraper/" in session.calls[0]["url"]
+
+
 def test_collect_xiaohongshu_returns_failed_on_http_failure():
     class FailingSession:
         def post(self, url, **kwargs):

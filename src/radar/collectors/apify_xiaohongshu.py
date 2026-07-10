@@ -18,6 +18,10 @@ def _items(payload: Any) -> list[dict[str, Any]]:
     return []
 
 
+def _actor_id(actor: str) -> str:
+    return actor.strip().replace("/", "~")
+
+
 def collect_xiaohongshu(
     keyword: str,
     token: str,
@@ -25,7 +29,10 @@ def collect_xiaohongshu(
     session=None,
 ) -> tuple[list[SocialRecord], SourceHealth]:
     client = session or requests.Session()
-    url = f"https://api.apify.com/v2/acts/{actor}/run-sync-get-dataset-items"
+    url = (
+        f"https://api.apify.com/v2/acts/{_actor_id(actor)}"
+        "/run-sync-get-dataset-items"
+    )
     try:
         response = client.post(
             url,
