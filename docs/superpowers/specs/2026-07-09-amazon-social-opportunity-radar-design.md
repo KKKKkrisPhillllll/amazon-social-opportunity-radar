@@ -121,10 +121,10 @@ C:\Users\Administrator\.claude\skills\amazon-review-scraper\scripts\amazon_revie
 Backup local script:
 
 ```text
-C:\Users\Administrator\Downloads\gpt\gpt-skills\qypm-005-voc-product-definition\scripts\voc_reviews.py
+E:\gpt\gpt-skills\qypm-005-voc-product-definition\scripts\voc_reviews.py
 ```
 
-Current local check on 2026-07-09 found the primary script path, but did not find the backup script path. V1 should keep the backup path configurable and show a setup warning if the file is missing.
+Current local check on 2026-07-10 found both the primary script path and the backup script path. V1 should still keep the backup path configurable and show a setup warning if the configured file is missing.
 
 Role:
 
@@ -272,7 +272,7 @@ V1 is acceptable when:
 2. The system can ingest at least one Xiaohongshu source through Apify.
 3. The system can ingest at least one overseas social source through ScrapeCreators.
 4. The system can call the primary Amazon review script when given an ASIN.
-5. The system warns clearly if the backup Amazon review script path is missing.
+5. The system can call the backup Amazon review script when the primary script is degraded and the backup path exists.
 6. The system can normalize social posts and Amazon reviews into consistent records.
 7. The system can generate opportunity scores with visible score breakdowns.
 8. The system can produce a Markdown daily brief.
@@ -320,4 +320,3 @@ The user should confirm these before code implementation starts:
 1. Daily push time and timezone.
 2. Feishu webhook storage method.
 3. Whether the first real connector should be Apify Xiaohongshu or ScrapeCreators.
-4. Correct backup Amazon review script path if the current path is outdated.
