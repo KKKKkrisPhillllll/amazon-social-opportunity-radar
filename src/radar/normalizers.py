@@ -39,11 +39,18 @@ def _comments(raw_comments: Any) -> list[str]:
     return result
 
 
+def _first_present(raw: dict[str, Any], *keys: str, default: Any = None) -> Any:
+    for key in keys:
+        if key in raw:
+            return raw[key]
+    return default
+
+
 def normalize_social_record(raw: dict[str, Any], platform: str, keyword: str) -> SocialRecord:
     engagement = {
-        "likes": _int(raw.get("likes") or raw.get("like_count")),
-        "favorites": _int(raw.get("favorites") or raw.get("collect_count")),
-        "comments": _int(raw.get("comment_count") or len(raw.get("comments", []))),
+        "likes": _int(_first_present(raw, "likes", "like_count")),
+        "favorites": _int(_first_present(raw, "favorites", "collect_count")),
+        "comments": _int(_first_present(raw, "comment_count", default=len(raw.get("comments", [])))),
     }
     tags = raw.get("tags") if isinstance(raw.get("tags"), list) else []
     return SocialRecord(

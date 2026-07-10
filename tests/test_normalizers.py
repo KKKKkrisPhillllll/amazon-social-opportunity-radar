@@ -12,16 +12,35 @@ def test_normalize_social_record_maps_common_fields():
             "comments": [{"text": "I need this for spices"}],
         },
         platform="xiaohongshu",
-        keyword="鍘ㄦ埧鏀剁撼",
+        keyword="厨房收纳",
     )
 
     assert record.platform == "xiaohongshu"
-    assert record.keyword == "鍘ㄦ埧鏀剁撼"
+    assert record.keyword == "厨房收纳"
     assert record.url == "https://example.com/post/1"
     assert record.title == "Small kitchen storage idea"
     assert record.engagement["likes"] == 120
     assert record.comments == ["I need this for spices"]
     assert record.health is SourceHealth.OK
+
+
+def test_normalize_social_record_preserves_explicit_zero_engagement_values():
+    record = normalize_social_record(
+        {
+            "likes": 0,
+            "like_count": 5,
+            "favorites": 0,
+            "collect_count": 7,
+            "comment_count": 0,
+            "comments": ["alias should not override explicit zero"],
+        },
+        platform="xiaohongshu",
+        keyword="厨房收纳",
+    )
+
+    assert record.engagement["likes"] == 0
+    assert record.engagement["favorites"] == 0
+    assert record.engagement["comments"] == 0
 
 
 def test_normalize_review_record_maps_review_fields():
