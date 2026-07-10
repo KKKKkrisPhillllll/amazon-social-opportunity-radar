@@ -12,7 +12,7 @@ def test_load_keywords_contains_v1_categories():
     assert "kitchen_appliances" in data["keyword_groups"]
     assert "kitchen_storage" in data["keyword_groups"]
     assert "pain_keywords" in data["keyword_groups"]
-    assert "鍘ㄦ埧鏀剁撼" in data["keyword_groups"]["kitchen_storage"]
+    assert "厨房收纳" in data["keyword_groups"]["kitchen_storage"]
 
 
 def test_load_source_settings_uses_environment_variable_names_only():
