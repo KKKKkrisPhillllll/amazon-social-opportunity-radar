@@ -1,3 +1,14 @@
 .worktrees/
 .worktrees
 .superpowers/sdd/
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+*.pyc
+*.pyo
+.env
+outputs/
+data/raw/
+data/processed/
+*.log

@@ -1,0 +1,10 @@
+feishu:
+  webhook_env: FEISHU_WEBHOOK_URL
+apify:
+  token_env: APIFY_TOKEN
+  xiaohongshu_actor: zhorex/rednote-xiaohongshu-scraper
+scrapecreators:
+  api_key_env: SCRAPECREATORS_API_KEY
+amazon_reviews:
+  primary_script: C:\Users\Administrator\.claude\skills\amazon-review-scraper\scripts\amazon_review_scraper.py
+  backup_script: E:\gpt\gpt-skills\qypm-005-voc-product-definition\scripts\voc_reviews.py
