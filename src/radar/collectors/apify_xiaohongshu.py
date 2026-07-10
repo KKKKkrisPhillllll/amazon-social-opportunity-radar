@@ -26,15 +26,18 @@ def collect_xiaohongshu(
 ) -> tuple[list[SocialRecord], SourceHealth]:
     client = session or requests.Session()
     url = f"https://api.apify.com/v2/acts/{actor}/run-sync-get-dataset-items"
-    response = client.post(
-        url,
-        params={"token": token},
-        json={"keyword": keyword, "maxItems": 20},
-        timeout=120,
-    )
-    response.raise_for_status()
-    records = [
-        normalize_social_record(item, platform="xiaohongshu", keyword=keyword)
-        for item in _items(response.json())
-    ]
+    try:
+        response = client.post(
+            url,
+            params={"token": token},
+            json={"keyword": keyword, "maxItems": 20},
+            timeout=120,
+        )
+        response.raise_for_status()
+        records = [
+            normalize_social_record(item, platform="xiaohongshu", keyword=keyword)
+            for item in _items(response.json())
+        ]
+    except Exception:
+        return [], SourceHealth.FAILED
     return records, SourceHealth.OK if records else SourceHealth.PARTIAL

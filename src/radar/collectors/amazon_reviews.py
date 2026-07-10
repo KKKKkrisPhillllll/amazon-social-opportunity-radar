@@ -20,7 +20,10 @@ def _extract_reviews(stdout: str) -> list[dict[str, Any]]:
 
 def _run_script(script: Path, asin: str, runner) -> tuple[list[dict[str, Any]], bool]:
     command = ["py", "-3", str(script), asin]
-    completed = runner(command, capture_output=True, text=True, timeout=120)
+    try:
+        completed = runner(command, capture_output=True, text=True, timeout=120)
+    except Exception:
+        return [], False
     combined = f"{completed.stdout}\n{completed.stderr}".lower()
     if completed.returncode != 0 or "403" in combined or "forbidden" in combined:
         return [], False

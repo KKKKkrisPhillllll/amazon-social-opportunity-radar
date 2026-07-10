@@ -21,6 +21,7 @@ Do not commit real API keys or webhook URLs.
 ## Dry Run
 
 ```powershell
+$env:PYTHONPATH="src"
 py -3 -m radar.cli --dry-run --use-sample-data
 ```
 

@@ -26,15 +26,18 @@ def collect_scrapecreators(
 ) -> tuple[list[SocialRecord], SourceHealth]:
     client = session or requests.Session()
     url = f"https://api.scrapecreators.com/v1/{platform}/search"
-    response = client.get(
-        url,
-        headers={"x-api-key": api_key},
-        params={"query": keyword, "limit": 20},
-        timeout=60,
-    )
-    response.raise_for_status()
-    records = [
-        normalize_social_record(item, platform=platform, keyword=keyword)
-        for item in _items(response.json())
-    ]
+    try:
+        response = client.get(
+            url,
+            headers={"x-api-key": api_key},
+            params={"query": keyword, "limit": 20},
+            timeout=60,
+        )
+        response.raise_for_status()
+        records = [
+            normalize_social_record(item, platform=platform, keyword=keyword)
+            for item in _items(response.json())
+        ]
+    except Exception:
+        return [], SourceHealth.FAILED
     return records, SourceHealth.OK if records else SourceHealth.PARTIAL

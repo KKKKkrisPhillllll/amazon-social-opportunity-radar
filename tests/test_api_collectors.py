@@ -17,6 +17,14 @@ class FakeResponse:
             raise RuntimeError(self.text)
 
 
+class RaisingResponse:
+    def raise_for_status(self):
+        raise RuntimeError("HTTP 500")
+
+    def json(self):
+        raise AssertionError("json should not be called after HTTP failure")
+
+
 class FakeSession:
     def __init__(self, payload):
         self.payload = payload
@@ -51,6 +59,22 @@ def test_collect_xiaohongshu_normalizes_apify_items():
     assert records[0].keyword == "kitchen storage"
 
 
+def test_collect_xiaohongshu_returns_failed_on_http_failure():
+    class FailingSession:
+        def post(self, url, **kwargs):
+            return RaisingResponse()
+
+    records, health = collect_xiaohongshu(
+        "kitchen storage",
+        "token",
+        "actor/name",
+        session=FailingSession(),
+    )
+
+    assert records == []
+    assert health is SourceHealth.FAILED
+
+
 def test_collect_scrapecreators_normalizes_items():
     session = FakeSession(
         {
@@ -70,3 +94,19 @@ def test_collect_scrapecreators_normalizes_items():
     assert health is SourceHealth.OK
     assert records[0].platform == "reddit"
     assert records[0].title == "Kitchen storage pain"
+
+
+def test_collect_scrapecreators_returns_failed_on_http_failure():
+    class FailingSession:
+        def get(self, url, **kwargs):
+            return RaisingResponse()
+
+    records, health = collect_scrapecreators(
+        "reddit",
+        "kitchen storage",
+        "key",
+        session=FailingSession(),
+    )
+
+    assert records == []
+    assert health is SourceHealth.FAILED
