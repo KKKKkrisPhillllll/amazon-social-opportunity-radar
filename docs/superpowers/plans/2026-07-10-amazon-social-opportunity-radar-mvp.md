@@ -27,8 +27,8 @@
 
 Create and modify these files:
 
-- Create: `.gitignore`
-  - Ignore secrets, local outputs, caches, and virtual environments.
+- Modify: `.gitignore`
+  - Preserve isolated-worktree and SDD ledger ignores; add secrets, local outputs, caches, and virtual environments.
 - Create: `README.md`
   - Explain MVP purpose, setup, and safe credential handling.
 - Create: `pyproject.toml`
@@ -83,7 +83,7 @@ Create and modify these files:
 ### Task 1: Project Scaffold And Config Loading
 
 **Files:**
-- Create: `.gitignore`
+- Modify: `.gitignore`
 - Create: `README.md`
 - Create: `pyproject.toml`
 - Create: `requirements.txt`
@@ -154,9 +154,12 @@ Expected: FAIL because `requirements.txt`, `radar.config`, and config files do n
 
 - [ ] **Step 3: Add scaffold files**
 
-Create `.gitignore`:
+Update `.gitignore`:
 
 ```gitignore
+.worktrees/
+.worktrees
+.superpowers/sdd/
 __pycache__/
 .pytest_cache/
 .venv/
