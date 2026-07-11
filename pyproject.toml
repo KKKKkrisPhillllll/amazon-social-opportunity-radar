@@ -1,0 +1,13 @@
+[project]
+name = "amazon-social-opportunity-radar"
+version = "0.1.0"
+description = "Configuration-driven social opportunity radar for Amazon product development."
+requires-python = ">=3.14"
+dependencies = [
+  "PyYAML>=6.0.2",
+  "requests>=2.32.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

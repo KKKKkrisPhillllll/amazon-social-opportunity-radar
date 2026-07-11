@@ -1,0 +1,41 @@
+marketplace: amazon_us
+focus_categories:
+  - kitchen_appliances
+  - kitchen_storage
+  - home_storage
+keyword_groups:
+  kitchen_appliances:
+    - 小厨房电器
+    - 厨房神器
+    - 懒人厨房电器
+    - 空气炸锅
+    - 破壁机
+    - 电蒸锅
+    - 早餐机
+    - 多功能料理锅
+    - 厨房小家电避雷
+    - 厨房小家电推荐
+  kitchen_storage:
+    - 厨房收纳
+    - 小厨房收纳
+    - 橱柜收纳
+    - 调料收纳
+    - 冰箱收纳
+    - 水槽收纳
+    - 台面收纳
+    - 锅具收纳
+    - 保鲜盒收纳
+    - 租房收纳
+    - 收纳神器
+    - 家居收纳好物
+  pain_keywords:
+    - 不好用
+    - 踩雷
+    - 后悔买
+    - 闲置了
+    - 太占地方
+    - 难清洗
+    - 不耐用
+    - 没必要买
+    - 平替
+    - 真实测评
