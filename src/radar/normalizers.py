@@ -74,7 +74,9 @@ def normalize_review_record(raw: dict[str, Any], source_script: str, raw_source_
         asin=_text(raw.get("asin") or raw.get("ASIN")),
         rating=_number(raw.get("rating")),
         title=_text(raw.get("title") or raw.get("review_title")),
-        review_text=_text(raw.get("review_text") or raw.get("text") or raw.get("content")),
+        review_text=_text(
+            raw.get("review_text") or raw.get("text") or raw.get("content") or raw.get("body")
+        ),
         review_date=_text(raw.get("date") or raw.get("review_date")),
         verified=raw.get("verified") if isinstance(raw.get("verified"), bool) else None,
         helpful_count=_int(helpful) if helpful is not None else None,
