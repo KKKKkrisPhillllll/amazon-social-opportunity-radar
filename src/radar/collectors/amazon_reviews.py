@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -32,7 +33,7 @@ def _run_script(
     runner,
     output_dir: Path | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
-    command = ["py", "-3", str(script), asin]
+    command = [sys.executable, str(script), asin]
     if output_dir is not None:
         command.extend(["-o", str(output_dir)])
     try:
