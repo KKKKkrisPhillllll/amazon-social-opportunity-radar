@@ -25,6 +25,17 @@ $env:PYTHONPATH="src"
 py -3 -m radar.cli --dry-run --use-sample-data
 ```
 
+## Amazon 评论首跑
+
+以下命令只采集一个 ASIN 的 Amazon 评论并写入本地报告；不会调用社媒来源、飞书或机会评分：
+
+```powershell
+$env:PYTHONPATH="src"
+py -3 -m radar.cli --amazon-review-asin B0D3XTZVS5 --dry-run
+```
+
+报告保存到 `outputs/amazon_review_report_B0D3XTZVS5_YYYYMMDD.md`。`outputs/` 已被 Git 忽略，真实评论数据不会被提交到仓库。
+
 ## Verify
 
 ```powershell
