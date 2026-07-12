@@ -1,5 +1,5 @@
-from radar.models import Opportunity, SourceHealth
-from radar.reports import build_daily_markdown
+from radar.models import Opportunity, ReviewRecord, SourceHealth
+from radar.reports import build_amazon_review_markdown, build_daily_markdown
 
 
 def test_build_daily_markdown_contains_sections_and_health():
@@ -37,3 +37,54 @@ def test_build_daily_markdown_contains_sections_and_health():
     assert "Score: 70" in markdown
     assert "## 7. Data Source Health" in markdown
     assert "scrapecreators: NOT_CONFIGURED" in markdown
+
+
+def test_build_amazon_review_markdown_only_uses_actual_low_rating_reviews():
+    reviews = [
+        ReviewRecord(
+            asin="B0D3XTZVS5",
+            rating=2,
+            title="难清洗",
+            review_text="缝隙里容易积水，清洗很麻烦。",
+            review_date="2026-07-11",
+            source_script="primary",
+            raw_source_path="C:/scripts/primary.py",
+        ),
+        ReviewRecord(
+            asin="B0D3XTZVS5",
+            rating=5,
+            title="满意",
+            review_text="使用方便。",
+            source_script="primary",
+            raw_source_path="C:/scripts/primary.py",
+        ),
+    ]
+
+    markdown = build_amazon_review_markdown(
+        asin="B0D3XTZVS5",
+        reviews=reviews,
+        health=SourceHealth.OK,
+        report_date="2026-07-12",
+    )
+
+    assert "# Amazon 评论首跑报告" in markdown
+    assert "- 采集状态：OK" in markdown
+    assert "- 实际评论数量：2" in markdown
+    assert "- 低评分评论数量：1" in markdown
+    assert "缝隙里容易积水，清洗很麻烦。" in markdown
+    assert "使用方便。" not in markdown
+    assert "- 实际使用脚本：primary" in markdown
+
+
+def test_build_amazon_review_markdown_reports_empty_result_without_inventing_reviews():
+    markdown = build_amazon_review_markdown(
+        asin="B0D3XTZVS5",
+        reviews=[],
+        health=SourceHealth.FAILED,
+        report_date="2026-07-12",
+    )
+
+    assert "- 采集状态：FAILED" in markdown
+    assert "- 实际评论数量：0" in markdown
+    assert "未采集到评分低于或等于 3 星的评论。" in markdown
+    assert "实际使用脚本" not in markdown

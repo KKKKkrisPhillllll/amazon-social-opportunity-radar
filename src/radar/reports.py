@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from radar.models import Opportunity, SourceHealth
+from radar.models import Opportunity, ReviewRecord, SourceHealth
 
 
 def _score_lines(opportunity: Opportunity) -> list[str]:
@@ -69,4 +69,39 @@ def build_daily_markdown(
     )
     for name, health in sorted(source_health.items()):
         lines.append(f"- {name}: {health.value}")
+    return "\n".join(lines).strip() + "\n"
+
+
+def build_amazon_review_markdown(
+    asin: str,
+    reviews: list[ReviewRecord],
+    health: SourceHealth,
+    report_date: str,
+) -> str:
+    low_rating_reviews = [review for review in reviews if review.rating <= 3]
+    lines = [
+        "# Amazon 评论首跑报告",
+        "",
+        f"- ASIN：{asin}",
+        f"- 运行日期：{report_date}",
+        f"- 采集状态：{health.value}",
+        f"- 实际评论数量：{len(reviews)}",
+        f"- 低评分评论数量：{len(low_rating_reviews)}",
+    ]
+    if reviews:
+        lines.append(f"- 实际使用脚本：{reviews[0].source_script}")
+    lines.extend(["", "## 低评分评论证据", ""])
+    if not low_rating_reviews:
+        lines.append("未采集到评分低于或等于 3 星的评论。")
+    for index, review in enumerate(low_rating_reviews, start=1):
+        lines.extend(
+            [
+                f"### 评论 {index}",
+                f"- 评分：{review.rating}",
+                f"- 标题：{review.title or '未提供'}",
+                f"- 日期：{review.review_date or '未提供'}",
+                f"- 内容：{review.review_text}",
+                "",
+            ]
+        )
     return "\n".join(lines).strip() + "\n"
