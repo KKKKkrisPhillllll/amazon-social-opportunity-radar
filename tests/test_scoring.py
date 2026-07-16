@@ -37,3 +37,26 @@ def test_score_opportunity_rewards_heat_pain_reviews_and_fit():
     assert opportunity.score_breakdown["amazon_review_validation"] > 0
     assert "kitchen organizer" in opportunity.amazon_validation_keywords
     assert opportunity.suggested_asins == ["B012345678"]
+
+
+def test_score_opportunity_recognizes_chinese_pain_terms():
+    social_records = [
+        SocialRecord(
+            platform="xiaohongshu",
+            keyword="厨房收纳",
+            url="https://example.com/a",
+            title="厨房收纳真实体验",
+            text="这个产品太占地方，而且难清洗，用几次就闲置了。",
+        )
+    ]
+
+    opportunity = score_opportunity(
+        social_records=social_records,
+        review_records=[],
+        category="kitchen_storage",
+        keywords=["厨房收纳"],
+    )
+
+    assert opportunity.score_breakdown["pain_intensity"] >= 18
+    assert "社媒" in opportunity.customer_pain_point
+    assert "亚马逊关键词" in opportunity.next_action

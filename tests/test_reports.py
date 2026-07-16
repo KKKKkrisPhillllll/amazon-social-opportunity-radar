@@ -4,7 +4,7 @@ from radar.reports import build_daily_markdown
 
 def test_build_daily_markdown_contains_sections_and_health():
     opportunity = Opportunity(
-        title="鍘ㄦ埧鏀剁撼绁炲櫒",
+        title="厨房收纳工具",
         category="kitchen_storage",
         source_platforms=["xiaohongshu"],
         evidence_summary="1 social record and 1 review record analyzed.",
@@ -31,9 +31,9 @@ def test_build_daily_markdown_contains_sections_and_health():
         focus="Kitchen appliances / kitchen storage / home storage",
     )
 
-    assert "# Amazon Social Opportunity Radar" in markdown
-    assert "## 1. Top Opportunities" in markdown
-    assert "鍘ㄦ埧鏀剁撼绁炲櫒" in markdown
-    assert "Score: 70" in markdown
-    assert "## 7. Data Source Health" in markdown
-    assert "scrapecreators: NOT_CONFIGURED" in markdown
+    assert "# 亚马逊社媒产品机会雷达" in markdown
+    assert "## 1. 今日优先机会" in markdown
+    assert "厨房收纳工具" in markdown
+    assert "总分：70" in markdown
+    assert "## 7. 数据源健康状态" in markdown
+    assert "scrapecreators: 未配置" in markdown

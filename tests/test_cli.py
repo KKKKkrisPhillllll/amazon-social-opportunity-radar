@@ -11,8 +11,8 @@ def test_cli_sample_dry_run_prints_report(capsys):
 
     captured = capsys.readouterr()
     assert exit_code == 0
-    assert "# Amazon Social Opportunity Radar" in captured.out
-    assert "Data Source Health" in captured.out
+    assert "# 亚马逊社媒产品机会雷达" in captured.out
+    assert "数据源健康状态" in captured.out
 
 
 def test_cli_defaults_to_real_pipeline_without_credentials(monkeypatch, capsys):
@@ -23,9 +23,9 @@ def test_cli_defaults_to_real_pipeline_without_credentials(monkeypatch, capsys):
 
     captured = capsys.readouterr()
     assert exit_code == 0
-    assert "No qualified opportunities found today." in captured.out
-    assert "xiaohongshu: NOT_CONFIGURED" in captured.out
-    assert "scrapecreators: NOT_CONFIGURED" in captured.out
+    assert "今日未发现达到输出条件的产品机会" in captured.out
+    assert "xiaohongshu: 未配置" in captured.out
+    assert "scrapecreators: 未配置" in captured.out
 
 
 def test_daily_script_uses_real_mode_by_default():
@@ -58,5 +58,5 @@ def test_cli_subprocess_dry_run_uses_project_src_path():
         text=True,
     )
 
-    assert "# Amazon Social Opportunity Radar" in result.stdout
-    assert "Data Source Health" in result.stdout
+    assert "# 亚马逊社媒产品机会雷达" in result.stdout
+    assert "数据源健康状态" in result.stdout

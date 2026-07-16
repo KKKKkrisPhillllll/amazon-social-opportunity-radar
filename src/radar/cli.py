@@ -14,6 +14,11 @@ from radar.scoring import score_opportunity
 
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_CATEGORY_NAMES = {
+    "kitchen_appliances": "厨房电器",
+    "kitchen_storage": "厨房收纳",
+    "home_storage": "家居收纳",
+}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -75,7 +80,10 @@ def main(argv: list[str] | None = None) -> int:
         opportunities=opportunities,
         source_health=source_health,
         report_date=args.report_date,
-        focus=" / ".join(keyword_settings.get("focus_categories", [])),
+        focus=" / ".join(
+            _CATEGORY_NAMES.get(category, category)
+            for category in keyword_settings.get("focus_categories", [])
+        ),
     )
     if args.dry_run:
         print(markdown)
