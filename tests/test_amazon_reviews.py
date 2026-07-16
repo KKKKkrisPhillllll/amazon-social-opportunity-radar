@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+import sys
 
 from radar.collectors.amazon_reviews import collect_amazon_reviews
 from radar.models import SourceHealth
@@ -135,3 +136,27 @@ def test_collect_amazon_reviews_reports_not_configured_when_scripts_missing(tmp_
 
     assert records == []
     assert health is SourceHealth.NOT_CONFIGURED
+
+
+def test_collect_amazon_reviews_uses_current_python_interpreter(tmp_path):
+    primary = tmp_path / "primary.py"
+    backup = tmp_path / "backup.py"
+    primary.write_text("", encoding="utf-8")
+    backup.write_text("", encoding="utf-8")
+    commands = []
+
+    def runner(command, capture_output, text, timeout):
+        commands.append(command)
+        return FakeCompleted(
+            0,
+            stdout=(
+                '[{"asin":"B0D3XTZVS5","rating":2,'
+                '"title":"Hard to clean","review_text":"Corners trap water"}]'
+            ),
+        )
+
+    records, health = collect_amazon_reviews("B0D3XTZVS5", primary, backup, runner=runner)
+
+    assert health is SourceHealth.OK
+    assert records[0].asin == "B0D3XTZVS5"
+    assert commands[0][0] == sys.executable
