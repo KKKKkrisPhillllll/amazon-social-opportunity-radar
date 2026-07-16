@@ -27,6 +27,8 @@ def collect_xiaohongshu(
     token: str,
     actor: str,
     session=None,
+    max_results: int = 20,
+    include_comments: bool = True,
 ) -> tuple[list[SocialRecord], SourceHealth]:
     client = session or requests.Session()
     url = (
@@ -37,7 +39,14 @@ def collect_xiaohongshu(
         response = client.post(
             url,
             params={"token": token},
-            json={"keyword": keyword, "maxItems": 20},
+            json={
+                "mode": "search",
+                "searchQuery": keyword,
+                "maxResults": max_results,
+                "includeComments": include_comments,
+                "maxComments": 20,
+                "sortBy": "general",
+            },
             timeout=120,
         )
         response.raise_for_status()

@@ -47,20 +47,24 @@ def _first_present(raw: dict[str, Any], *keys: str, default: Any = None) -> Any:
 
 
 def normalize_social_record(raw: dict[str, Any], platform: str, keyword: str) -> SocialRecord:
+    raw_comments = raw.get("comments")
+    comment_count = len(raw_comments) if isinstance(raw_comments, list) else _int(raw_comments)
     engagement = {
         "likes": _int(_first_present(raw, "likes", "like_count")),
-        "favorites": _int(_first_present(raw, "favorites", "collect_count")),
-        "comments": _int(_first_present(raw, "comment_count", default=len(raw.get("comments", [])))),
+        "favorites": _int(_first_present(raw, "favorites", "collect_count", "saves")),
+        "comments": _int(_first_present(raw, "comment_count", default=comment_count)),
     }
     tags = raw.get("tags") if isinstance(raw.get("tags"), list) else []
     return SocialRecord(
         platform=platform,
         keyword=keyword,
-        url=_text(raw.get("url") or raw.get("link") or raw.get("note_url")),
+        url=_text(raw.get("url") or raw.get("link") or raw.get("note_url") or raw.get("postUrl")),
         title=_text(raw.get("title") or raw.get("caption")),
-        text=_text(raw.get("text") or raw.get("body") or raw.get("description")),
-        author=_text(raw.get("author") or raw.get("username") or raw.get("channel")),
-        published_at=_text(raw.get("published_at") or raw.get("date")),
+        text=_text(raw.get("text") or raw.get("body") or raw.get("description") or raw.get("content")),
+        author=_text(
+            raw.get("author") or raw.get("username") or raw.get("channel") or raw.get("authorName")
+        ),
+        published_at=_text(raw.get("published_at") or raw.get("date") or raw.get("publishedAt")),
         tags=[_text(tag) for tag in tags if _text(tag)],
         engagement=engagement,
         comments=_comments(raw.get("comments")),

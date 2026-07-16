@@ -43,6 +43,33 @@ def test_normalize_social_record_preserves_explicit_zero_engagement_values():
     assert record.engagement["comments"] == 0
 
 
+def test_normalize_social_record_maps_apify_rednote_fields():
+    record = normalize_social_record(
+        {
+            "postUrl": "https://www.xiaohongshu.com/explore/abc",
+            "title": "小厨房收纳",
+            "content": "台面太乱，希望更省空间。",
+            "authorName": "厨房用户",
+            "publishedAt": "2026-07-15T08:00:00Z",
+            "likes": 18,
+            "saves": 7,
+            "comments": [
+                {"content": "希望容易清洗"},
+                {"content": "安装不要打孔"},
+            ],
+        },
+        platform="xiaohongshu",
+        keyword="厨房收纳",
+    )
+
+    assert record.url == "https://www.xiaohongshu.com/explore/abc"
+    assert record.text == "台面太乱，希望更省空间。"
+    assert record.author == "厨房用户"
+    assert record.published_at == "2026-07-15T08:00:00Z"
+    assert record.engagement == {"likes": 18, "favorites": 7, "comments": 2}
+    assert record.comments == ["希望容易清洗", "安装不要打孔"]
+
+
 def test_normalize_review_record_maps_review_fields():
     record = normalize_review_record(
         {

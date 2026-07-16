@@ -72,6 +72,31 @@ def test_collect_xiaohongshu_accepts_slash_actor_names():
     assert "/zhorex~rednote-xiaohongshu-scraper/" in session.calls[0]["url"]
 
 
+def test_collect_xiaohongshu_uses_official_search_input():
+    session = FakeSession([])
+
+    collect_xiaohongshu(
+        "厨房收纳",
+        "token",
+        "zhorex/rednote-xiaohongshu-scraper",
+        session=session,
+        max_results=12,
+        include_comments=False,
+    )
+
+    call = session.calls[0]
+    assert call["method"] == "POST"
+    assert call["kwargs"]["params"] == {"token": "token"}
+    assert call["kwargs"]["json"] == {
+        "mode": "search",
+        "searchQuery": "厨房收纳",
+        "maxResults": 12,
+        "includeComments": False,
+        "maxComments": 20,
+        "sortBy": "general",
+    }
+
+
 def test_collect_xiaohongshu_returns_failed_on_http_failure():
     class FailingSession:
         def post(self, url, **kwargs):
