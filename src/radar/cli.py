@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
                 social_records=social_records,
                 review_records=review_records,
                 category="kitchen_storage",
-                keywords=["kitchen organizer", "spice rack organizer"],
+                keywords=["厨房收纳架", "调料架收纳"],
             )
         ]
         source_health = {

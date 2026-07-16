@@ -17,6 +17,11 @@ _HEALTH_NAMES = {
     SourceHealth.FAILED: "失败",
     SourceHealth.NOT_CONFIGURED: "未配置",
 }
+_CATEGORY_NAMES = {
+    "kitchen_appliances": "厨房电器",
+    "kitchen_storage": "厨房收纳",
+    "home_storage": "家居收纳",
+}
 
 
 def _score_lines(opportunity: Opportunity) -> list[str]:
@@ -51,7 +56,7 @@ def build_daily_markdown(
             [
                 f"### 机会 {index}：{opportunity.title}",
                 *_score_lines(opportunity),
-                f"- 类目：{opportunity.category}",
+                f"- 类目：{_CATEGORY_NAMES.get(opportunity.category, opportunity.category)}",
                 f"- 数据来源：{', '.join(opportunity.source_platforms) or '未知'}",
                 f"- 用户痛点：{opportunity.customer_pain_point}",
                 f"- 产品建议：{opportunity.product_idea}",

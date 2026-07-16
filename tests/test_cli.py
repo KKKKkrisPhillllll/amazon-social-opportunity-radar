@@ -13,6 +13,8 @@ def test_cli_sample_dry_run_prints_report(capsys):
     assert exit_code == 0
     assert "# 亚马逊社媒产品机会雷达" in captured.out
     assert "数据源健康状态" in captured.out
+    assert "小厨房调料收纳方案" in captured.out
+    assert "用户痛点：难清洗" in captured.out
 
 
 def test_cli_defaults_to_real_pipeline_without_credentials(monkeypatch, capsys):

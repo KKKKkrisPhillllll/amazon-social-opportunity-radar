@@ -35,5 +35,6 @@ def test_build_daily_markdown_contains_sections_and_health():
     assert "## 1. 今日优先机会" in markdown
     assert "厨房收纳工具" in markdown
     assert "总分：70" in markdown
+    assert "类目：厨房收纳" in markdown
     assert "## 7. 数据源健康状态" in markdown
     assert "scrapecreators: 未配置" in markdown
