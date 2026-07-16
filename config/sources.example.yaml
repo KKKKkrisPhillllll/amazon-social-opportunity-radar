@@ -1,10 +1,22 @@
 feishu:
   webhook_env: FEISHU_WEBHOOK_URL
 apify:
+  enabled: true
   token_env: APIFY_TOKEN
   xiaohongshu_actor: zhorex/rednote-xiaohongshu-scraper
+  max_results: 20
+  include_comments: true
 scrapecreators:
+  enabled: true
   api_key_env: SCRAPECREATORS_API_KEY
+  platforms:
+    - instagram
+    - tiktok
+    - youtube
+    - reddit
 amazon_reviews:
-  primary_script: C:\Users\Administrator\.claude\skills\amazon-review-scraper\scripts\amazon_review_scraper.py
-  backup_script: E:\gpt\gpt-skills\qypm-005-voc-product-definition\scripts\voc_reviews.py
+  enabled: false
+  primary_script_env: AMAZON_REVIEW_PRIMARY_SCRIPT
+  backup_script_env: AMAZON_REVIEW_BACKUP_SCRIPT
+collection:
+  max_keywords_per_group: 1

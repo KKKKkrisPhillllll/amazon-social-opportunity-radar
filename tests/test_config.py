@@ -11,6 +11,7 @@ def test_load_keywords_contains_v1_categories():
     assert data["marketplace"] == "amazon_us"
     assert "kitchen_appliances" in data["keyword_groups"]
     assert "kitchen_storage" in data["keyword_groups"]
+    assert "home_storage" in data["keyword_groups"]
     assert "pain_keywords" in data["keyword_groups"]
     assert "厨房收纳" in data["keyword_groups"]["kitchen_storage"]
 
@@ -21,6 +22,12 @@ def test_load_source_settings_uses_environment_variable_names_only():
     assert data["feishu"]["webhook_env"] == "FEISHU_WEBHOOK_URL"
     assert data["apify"]["token_env"] == "APIFY_TOKEN"
     assert data["scrapecreators"]["api_key_env"] == "SCRAPECREATORS_API_KEY"
+    assert data["apify"]["enabled"] is True
+    assert data["apify"]["max_results"] == 20
+    assert data["apify"]["include_comments"] is True
+    assert data["scrapecreators"]["enabled"] is True
+    assert data["scrapecreators"]["platforms"] == ["instagram", "tiktok", "youtube", "reddit"]
+    assert data["collection"]["max_keywords_per_group"] == 1
 
 
 def test_require_env_raises_clear_error(monkeypatch):

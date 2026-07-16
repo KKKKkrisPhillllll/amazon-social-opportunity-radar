@@ -23,12 +23,18 @@ def load_keywords(path: str | Path) -> dict[str, Any]:
     groups = data.get("keyword_groups")
     if not isinstance(groups, dict) or not groups:
         raise ValueError("keywords config requires non-empty keyword_groups")
+    categories = data.get("focus_categories")
+    if not isinstance(categories, list) or not categories:
+        raise ValueError("keywords config requires non-empty focus_categories")
+    missing_groups = [category for category in categories if category not in groups]
+    if missing_groups:
+        raise ValueError(f"keywords config missing groups for: {', '.join(missing_groups)}")
     return data
 
 
 def load_source_settings(path: str | Path) -> dict[str, Any]:
     data = _load_yaml(path)
-    for key in ("feishu", "apify", "scrapecreators", "amazon_reviews"):
+    for key in ("feishu", "apify", "scrapecreators", "amazon_reviews", "collection"):
         if key not in data:
             raise ValueError(f"sources config missing required section: {key}")
     return data
