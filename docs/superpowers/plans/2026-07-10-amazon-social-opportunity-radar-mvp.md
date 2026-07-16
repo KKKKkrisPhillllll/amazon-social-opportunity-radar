@@ -10,13 +10,13 @@
 
 ## Global Constraints
 
-- Project root: `E:\vscode\amazon-social-opportunity-radar`
+- Project root: repository root.
 - Default marketplace context: Amazon US unless configured differently.
 - Primary categories: kitchen appliances, kitchen storage, home storage.
 - Xiaohongshu source: Apify RedNote / Xiaohongshu Scraper.
 - Instagram / TikTok / YouTube / Reddit source: ScrapeCreators.
-- Primary Amazon review script: `C:\Users\Administrator\.claude\skills\amazon-review-scraper\scripts\amazon_review_scraper.py`
-- Backup Amazon review script: `E:\gpt\gpt-skills\qypm-005-voc-product-definition\scripts\voc_reviews.py`
+- Primary Amazon review script path comes from `AMAZON_REVIEW_PRIMARY_SCRIPT`.
+- Backup Amazon review script path comes from `AMAZON_REVIEW_BACKUP_SCRIPT`.
 - Feishu webhook must come from environment variable `FEISHU_WEBHOOK_URL`; never commit real webhooks or API keys.
 - Source health values must be exactly: `OK`, `PARTIAL`, `DEGRADED`, `FAILED`, `NOT_CONFIGURED`.
 - V1 does not include a web dashboard, account system, billing, automatic supplier outreach, or platform access-control circumvention.
@@ -256,8 +256,8 @@ apify:
 scrapecreators:
   api_key_env: SCRAPECREATORS_API_KEY
 amazon_reviews:
-  primary_script: C:\Users\Administrator\.claude\skills\amazon-review-scraper\scripts\amazon_review_scraper.py
-  backup_script: E:\gpt\gpt-skills\qypm-005-voc-product-definition\scripts\voc_reviews.py
+  primary_script_env: AMAZON_REVIEW_PRIMARY_SCRIPT
+  backup_script_env: AMAZON_REVIEW_BACKUP_SCRIPT
 ```
 
 Create `src/radar/__init__.py`:

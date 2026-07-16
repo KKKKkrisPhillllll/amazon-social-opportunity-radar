@@ -10,4 +10,4 @@ if ([string]::IsNullOrWhiteSpace($env:PYTHONPATH)) {
     $env:PYTHONPATH = "$ProjectSrc$([System.IO.Path]::PathSeparator)$env:PYTHONPATH"
 }
 
-py -3 -m radar.cli --use-sample-data
+py -3 -m radar.cli
