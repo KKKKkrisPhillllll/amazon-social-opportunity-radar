@@ -112,19 +112,19 @@ Expected fields:
 
 ### 5.3 Amazon Reviews
 
-Primary local script:
+Primary script path environment variable:
 
 ```text
-C:\Users\Administrator\.claude\skills\amazon-review-scraper\scripts\amazon_review_scraper.py
+AMAZON_REVIEW_PRIMARY_SCRIPT
 ```
 
-Backup local script:
+Backup script path environment variable:
 
 ```text
-E:\gpt\gpt-skills\qypm-005-voc-product-definition\scripts\voc_reviews.py
+AMAZON_REVIEW_BACKUP_SCRIPT
 ```
 
-Current local check on 2026-07-10 found both the primary script path and the backup script path. V1 should still keep the backup path configurable and show a setup warning if the configured file is missing.
+Local absolute paths are intentionally excluded from the public repository. V1 should keep both paths configurable and show a setup warning if a configured file is missing.
 
 Role:
 
