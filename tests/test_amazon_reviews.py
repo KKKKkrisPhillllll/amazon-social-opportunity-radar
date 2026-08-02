@@ -1,5 +1,5 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 from radar.collectors.amazon_reviews import collect_amazon_reviews
 from radar.models import SourceHealth
