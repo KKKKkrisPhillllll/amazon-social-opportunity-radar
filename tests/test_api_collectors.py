@@ -1,6 +1,8 @@
+import requests
+
 from radar.collectors.apify_xiaohongshu import collect_xiaohongshu
 from radar.collectors.scrapecreators import collect_scrapecreators
-from radar.models import SourceHealth
+from radar.models import SourceHealth, SourceRun
 
 
 class FakeResponse:
@@ -19,7 +21,7 @@ class FakeResponse:
 
 class RaisingResponse:
     def raise_for_status(self):
-        raise RuntimeError("HTTP 500")
+        raise requests.RequestException("HTTP 500")
 
     def json(self):
         raise AssertionError("json should not be called after HTTP failure")
@@ -43,20 +45,27 @@ def test_collect_xiaohongshu_normalizes_apify_items():
     session = FakeSession(
         [
             {
-                "url": "https://xiaohongshu.com/a",
-                "title": "kitchen storage",
-                "text": "takes too much space",
-                "likes": 50,
+                "postUrl": "https://xiaohongshu.com/a",
+                "content": "takes too much space",
+                "likeCount": 50,
                 "comments": [{"text": "regret buying"}],
             }
         ]
     )
 
-    records, health = collect_xiaohongshu("kitchen storage", "token", "actor/name", session=session)
+    source_run = collect_xiaohongshu(
+        "kitchen storage", "token", "actor/name", session=session
+    )
 
-    assert health is SourceHealth.OK
-    assert records[0].platform == "xiaohongshu"
-    assert records[0].keyword == "kitchen storage"
+    assert isinstance(source_run, SourceRun)
+    assert source_run.health is SourceHealth.OK
+    assert source_run.records[0].platform == "xiaohongshu"
+    assert source_run.records[0].keyword == "kitchen storage"
+    assert session.calls[0]["kwargs"]["json"] == {
+        "mode": "search",
+        "searchQuery": "kitchen storage",
+        "maxResults": 20,
+    }
 
 
 def test_collect_xiaohongshu_accepts_slash_actor_names():
@@ -77,21 +86,22 @@ def test_collect_xiaohongshu_returns_failed_on_http_failure():
         def post(self, url, **kwargs):
             return RaisingResponse()
 
-    records, health = collect_xiaohongshu(
+    source_run = collect_xiaohongshu(
         "kitchen storage",
         "token",
         "actor/name",
         session=FailingSession(),
     )
 
-    assert records == []
-    assert health is SourceHealth.FAILED
+    assert source_run.records == ()
+    assert source_run.health is SourceHealth.FAILED
+    assert source_run.diagnostic == "request_failed"
 
 
 def test_collect_scrapecreators_normalizes_items():
     session = FakeSession(
         {
-            "items": [
+            "posts": [
                 {
                     "url": "https://reddit.com/r/test",
                     "title": "Kitchen storage pain",
@@ -102,11 +112,48 @@ def test_collect_scrapecreators_normalizes_items():
         }
     )
 
-    records, health = collect_scrapecreators("reddit", "kitchen storage", "key", session=session)
+    source_run = collect_scrapecreators("reddit", "kitchen storage", "key", session=session)
 
-    assert health is SourceHealth.OK
-    assert records[0].platform == "reddit"
-    assert records[0].title == "Kitchen storage pain"
+    assert source_run.health is SourceHealth.OK
+    assert source_run.records[0].platform == "reddit"
+    assert source_run.records[0].title == "Kitchen storage pain"
+    assert session.calls[0]["url"].endswith("/v1/reddit/search")
+    assert session.calls[0]["kwargs"]["params"] == {"query": "kitchen storage"}
+
+
+def test_collect_scrapecreators_uses_tiktok_endpoint_and_response_list():
+    session = FakeSession(
+        {
+            "search_item_list": [
+                {
+                    "aweme_info": {
+                        "share_url": "https://www.tiktok.com/@a/video/1",
+                        "desc": "hard to clean organizer",
+                        "author": {"nickname": "tester"},
+                        "statistics": {"digg_count": 8, "comment_count": 2},
+                    }
+                }
+            ]
+        }
+    )
+
+    source_run = collect_scrapecreators("tiktok", "organizer", "key", session=session)
+
+    assert source_run.health is SourceHealth.OK
+    assert source_run.records[0].url == "https://www.tiktok.com/@a/video/1"
+    assert source_run.records[0].text == "hard to clean organizer"
+    assert session.calls[0]["url"].endswith("/v1/tiktok/search/keyword")
+    assert session.calls[0]["kwargs"]["params"] == {"query": "organizer"}
+
+
+def test_collect_scrapecreators_marks_records_without_evidence_as_partial():
+    session = FakeSession({"videos": [{"title": "Missing URL"}]})
+
+    source_run = collect_scrapecreators("youtube", "organizer", "key", session=session)
+
+    assert source_run.health is SourceHealth.PARTIAL
+    assert source_run.records == ()
+    assert source_run.fetched_count == 1
 
 
 def test_collect_scrapecreators_returns_failed_on_http_failure():
@@ -114,12 +161,12 @@ def test_collect_scrapecreators_returns_failed_on_http_failure():
         def get(self, url, **kwargs):
             return RaisingResponse()
 
-    records, health = collect_scrapecreators(
+    source_run = collect_scrapecreators(
         "reddit",
         "kitchen storage",
         "key",
         session=FailingSession(),
     )
 
-    assert records == []
-    assert health is SourceHealth.FAILED
+    assert source_run.records == ()
+    assert source_run.health is SourceHealth.FAILED

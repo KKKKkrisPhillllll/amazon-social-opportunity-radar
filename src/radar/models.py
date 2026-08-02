@@ -28,6 +28,25 @@ class SocialRecord:
 
 
 @dataclass(frozen=True)
+class SourceRun:
+    """A single source invocation with safe operational diagnostics."""
+
+    source_name: str
+    platform: str
+    records: tuple[SocialRecord, ...]
+    health: SourceHealth
+    fetched_count: int
+    duplicate_count: int = 0
+    diagnostic: str = ""
+
+    def __post_init__(self) -> None:
+        if self.fetched_count < 0:
+            raise ValueError("fetched_count must be non-negative")
+        if self.duplicate_count < 0 or self.duplicate_count > self.fetched_count:
+            raise ValueError("duplicate_count must be between zero and fetched_count")
+
+
+@dataclass(frozen=True)
 class ReviewRecord:
     asin: str
     rating: float

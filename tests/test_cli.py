@@ -3,7 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from radar.cli import main
+from radar.models import SocialRecord, SourceHealth, SourceRun
 
 
 def test_cli_dry_run_prints_report(capsys):
@@ -11,8 +14,8 @@ def test_cli_dry_run_prints_report(capsys):
 
     captured = capsys.readouterr()
     assert exit_code == 0
-    assert "# Amazon Social Opportunity Radar" in captured.out
-    assert "Data Source Health" in captured.out
+    assert "# 亚马逊社媒产品机会雷达" in captured.out
+    assert "数据源健康状态" in captured.out
 
 
 def test_cli_subprocess_dry_run_uses_project_src_path():
@@ -37,5 +40,63 @@ def test_cli_subprocess_dry_run_uses_project_src_path():
         text=True,
     )
 
-    assert "# Amazon Social Opportunity Radar" in result.stdout
-    assert "Data Source Health" in result.stdout
+    assert "# 亚马逊社媒产品机会雷达" in result.stdout
+    assert "数据源健康状态" in result.stdout
+
+
+def test_cli_real_mode_writes_local_report_without_sending(monkeypatch, tmp_path, capsys):
+    record = SocialRecord(
+        platform="xiaohongshu",
+        keyword="厨房收纳",
+        url="https://www.xiaohongshu.com/explore/1",
+        title="小厨房收纳",
+        text="难清洗",
+    )
+
+    def fake_run(*args, **kwargs):
+        return (
+            {
+                "kitchen_appliances": [],
+                "kitchen_storage": [record],
+                "home_storage": [],
+            },
+            [],
+            [
+                SourceRun(
+                    "apify_xiaohongshu",
+                    "xiaohongshu",
+                    (record,),
+                    SourceHealth.OK,
+                    fetched_count=1,
+                )
+            ],
+        )
+
+    monkeypatch.setattr("radar.cli.run_configured_sources", fake_run)
+    exit_code = main(
+        [
+            "--output-dir",
+            str(tmp_path),
+            "--report-date",
+            "2026-08-02",
+            "--max-keywords-per-category",
+            "1",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    report_path = tmp_path / "radar_report_2026_08_02.md"
+    assert exit_code == 0
+    assert report_path.exists()
+    assert "已写入本地报告" in captured.out
+    assert "运行模式：真实数据" in report_path.read_text(encoding="utf-8")
+
+
+def test_cli_rejects_dry_run_and_send_feishu_together():
+    with pytest.raises(SystemExit):
+        main(["--dry-run", "--send-feishu"])
+
+
+def test_cli_rejects_sending_sample_data_to_feishu():
+    with pytest.raises(SystemExit):
+        main(["--use-sample-data", "--send-feishu"])

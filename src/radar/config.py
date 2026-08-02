@@ -14,7 +14,7 @@ def _load_yaml(path: str | Path) -> dict[str, Any]:
     with resolved.open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
     if not isinstance(data, dict):
-        raise ValueError(f"Config file must contain a mapping: {resolved}")
+        raise TypeError(f"Config file must contain a mapping: {resolved}")
     return data
 
 
@@ -28,7 +28,7 @@ def load_keywords(path: str | Path) -> dict[str, Any]:
 
 def load_source_settings(path: str | Path) -> dict[str, Any]:
     data = _load_yaml(path)
-    for key in ("feishu", "apify", "scrapecreators", "amazon_reviews"):
+    for key in ("feishu", "apify", "scrapecreators", "praw_reddit", "amazon_reviews"):
         if key not in data:
             raise ValueError(f"sources config missing required section: {key}")
     return data
@@ -39,3 +39,8 @@ def require_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"Required environment variable is not configured: {name}")
     return value
+
+
+def optional_env(name: str) -> str | None:
+    value = os.environ.get(name, "").strip()
+    return value or None
