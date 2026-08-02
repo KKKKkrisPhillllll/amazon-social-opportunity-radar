@@ -5,6 +5,7 @@ description = "Configuration-driven social opportunity radar for Amazon product 
 requires-python = ">=3.14"
 dependencies = [
   "PyYAML>=6.0.2",
+  "praw>=8,<9",
   "requests>=2.32.0",
 ]
 
