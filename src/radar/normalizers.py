@@ -48,24 +48,52 @@ def _first_present(raw: dict[str, Any], *keys: str, default: Any = None) -> Any:
 
 def normalize_social_record(raw: dict[str, Any], platform: str, keyword: str) -> SocialRecord:
     engagement = {
-        "likes": _int(_first_present(raw, "likes", "like_count")),
-        "favorites": _int(_first_present(raw, "favorites", "collect_count")),
-        "comments": _int(_first_present(raw, "comment_count", default=len(raw.get("comments", [])))),
+        "likes": _int(_first_present(raw, "likes", "like_count", "likeCount")),
+        "favorites": _int(
+            _first_present(raw, "favorites", "collect_count", "collectCount", "favorite_count")
+        ),
+        "comments": _int(
+            _first_present(raw, "comment_count", "commentCount", default=len(_comments(raw.get("comments"))))
+        ),
     }
     tags = raw.get("tags") if isinstance(raw.get("tags"), list) else []
     return SocialRecord(
         platform=platform,
         keyword=keyword,
-        url=_text(raw.get("url") or raw.get("link") or raw.get("note_url")),
+        url=_text(raw.get("url") or raw.get("link") or raw.get("note_url") or raw.get("postUrl")),
         title=_text(raw.get("title") or raw.get("caption")),
-        text=_text(raw.get("text") or raw.get("body") or raw.get("description")),
+        text=_text(raw.get("text") or raw.get("body") or raw.get("description") or raw.get("content")),
         author=_text(raw.get("author") or raw.get("username") or raw.get("channel")),
-        published_at=_text(raw.get("published_at") or raw.get("date")),
+        published_at=_text(raw.get("published_at") or raw.get("publishedAt") or raw.get("date")),
         tags=[_text(tag) for tag in tags if _text(tag)],
         engagement=engagement,
         comments=_comments(raw.get("comments")),
         health=SourceHealth.OK,
     )
+
+
+def normalize_apify_xiaohongshu_record(raw: dict[str, Any], keyword: str) -> SocialRecord:
+    author = raw.get("author")
+    author_name = ""
+    if isinstance(author, dict):
+        author_name = _text(
+            author.get("nickname") or author.get("name") or author.get("userName")
+        )
+    elif author is not None:
+        author_name = _text(author)
+    normalized = {
+        "url": raw.get("postUrl") or raw.get("url") or raw.get("note_url"),
+        "title": raw.get("title") or raw.get("caption"),
+        "text": raw.get("content") or raw.get("text") or raw.get("description"),
+        "author": author_name or raw.get("authorName") or raw.get("username"),
+        "published_at": raw.get("publishedAt") or raw.get("published_at") or raw.get("date"),
+        "likes": raw.get("likeCount") if "likeCount" in raw else raw.get("likes"),
+        "favorites": raw.get("collectCount") if "collectCount" in raw else raw.get("favorites"),
+        "comment_count": raw.get("commentCount") if "commentCount" in raw else raw.get("comment_count"),
+        "comments": raw.get("comments"),
+        "tags": raw.get("tags"),
+    }
+    return normalize_social_record(normalized, platform="xiaohongshu", keyword=keyword)
 
 
 def normalize_review_record(raw: dict[str, Any], source_script: str, raw_source_path: str) -> ReviewRecord:
