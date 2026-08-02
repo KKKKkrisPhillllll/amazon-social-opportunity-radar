@@ -46,7 +46,7 @@
 ### 2.1 已确认的外部契约
 
 - Apify `zhorex/rednote-xiaohongshu-scraper` 搜索调用使用 `mode: search`、`searchQuery`、`maxResults`，不使用旧的 `keyword`、`maxItems` 字段。
-- ScrapeCreators 必须按平台拆分端点与响应提取器：TikTok 使用关键词搜索端点并读取 `search_item_list`；YouTube 使用搜索端点并读取 `videos`；Reddit 使用 subreddit 搜索端点并读取 `posts`；Instagram 默认使用公开 profile 搜索，只有返回实际帖子时才生成社媒证据。
+- ScrapeCreators 必须按平台拆分端点与响应提取器：Instagram 使用 `/v1/instagram/search`；TikTok 使用关键词搜索端点并读取 `search_item_list`；YouTube 使用搜索端点并读取 `videos`；Reddit 使用 `/v1/reddit/search` 并读取 `posts`。仅当记录带有可用 URL 和文本或标题时，才生成社媒证据。
 - 各来源适配器只把已识别的公开响应字段映射为 `SocialRecord`。未知字段、空 URL 或空正文不得被伪造为内容。
 - PRAW 只使用只读 OAuth，不支持用户名、密码、发帖、投票或其他写入行为。
 
