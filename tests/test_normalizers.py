@@ -1,5 +1,9 @@
 from radar.models import SourceHealth
-from radar.normalizers import normalize_review_record, normalize_social_record
+from radar.normalizers import (
+    normalize_apify_xiaohongshu_record,
+    normalize_review_record,
+    normalize_social_record,
+)
 
 
 def test_normalize_social_record_maps_common_fields():
@@ -41,6 +45,27 @@ def test_normalize_social_record_preserves_explicit_zero_engagement_values():
     assert record.engagement["likes"] == 0
     assert record.engagement["favorites"] == 0
     assert record.engagement["comments"] == 0
+
+
+def test_normalize_apify_xiaohongshu_record_maps_actor_contract_fields():
+    record = normalize_apify_xiaohongshu_record(
+        {
+            "postUrl": "https://www.xiaohongshu.com/explore/123",
+            "content": "调料罐总是占台面",
+            "publishedAt": "2026-08-02T08:00:00Z",
+            "author": {"nickname": "收纳用户"},
+            "likeCount": 12,
+            "collectCount": 7,
+            "commentCount": 3,
+        },
+        keyword="厨房收纳",
+    )
+
+    assert record.url == "https://www.xiaohongshu.com/explore/123"
+    assert record.text == "调料罐总是占台面"
+    assert record.author == "收纳用户"
+    assert record.published_at == "2026-08-02T08:00:00Z"
+    assert record.engagement == {"likes": 12, "favorites": 7, "comments": 3}
 
 
 def test_normalize_review_record_maps_review_fields():
