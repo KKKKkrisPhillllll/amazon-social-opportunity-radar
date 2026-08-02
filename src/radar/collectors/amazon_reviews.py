@@ -37,7 +37,7 @@ def _run_script(
         command.extend(["-o", str(output_dir)])
     try:
         completed = runner(command, capture_output=True, text=True, timeout=120)
-    except Exception:
+    except (OSError, subprocess.TimeoutExpired):
         return [], False
     combined = f"{completed.stdout}\n{completed.stderr}".lower()
     if completed.returncode != 0 or "403" in combined or "forbidden" in combined:

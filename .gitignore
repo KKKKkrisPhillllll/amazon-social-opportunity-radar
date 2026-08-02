@@ -12,3 +12,6 @@ outputs/
 data/raw/
 data/processed/
 *.log
+.coverage
+htmlcov/
+*.egg-info/

@@ -1,72 +1,108 @@
 from __future__ import annotations
 
-from radar.models import Opportunity, SourceHealth
+from collections.abc import Mapping, Sequence
+
+from radar.models import Opportunity, SocialRecord, SourceHealth, SourceRun
+
+SCORE_LABELS = {
+    "social_heat": "社媒热度",
+    "pain_intensity": "痛点强度",
+    "amazon_review_validation": "亚马逊评论验证",
+    "product_development_fit": "产品开发匹配度",
+    "amazon_business_feasibility": "亚马逊商业可行性",
+}
 
 
 def _score_lines(opportunity: Opportunity) -> list[str]:
-    lines = [f"- Score: {opportunity.total_score}"]
+    lines = [f"- 总分：{opportunity.total_score}"]
     for name, value in opportunity.score_breakdown.items():
-        lines.append(f"  - {name}: {value}")
+        lines.append(f"- {SCORE_LABELS.get(name, name)}：{value}")
     return lines
 
 
+def _evidence_lines(records: Sequence[SocialRecord]) -> list[str]:
+    urls = [record.url for record in records if record.url][:3]
+    if not urls:
+        return ["- 证据链接：本轮无可公开引用的链接。"]
+    return [f"- 证据链接：{url}" for url in urls]
+
+
+def _source_run_line(source_run: SourceRun) -> str:
+    diagnostic = source_run.diagnostic or "无"
+    return (
+        f"- {source_run.source_name}：{source_run.health.value}；"
+        f"采集 {source_run.fetched_count} 条，去重 {source_run.duplicate_count} 条；"
+        f"诊断：`{diagnostic}`"
+    )
+
+
 def build_daily_markdown(
-    opportunities: list[Opportunity],
-    source_health: dict[str, SourceHealth],
+    opportunities: Sequence[Opportunity],
+    source_runs: Sequence[SourceRun],
     report_date: str,
     focus: str,
+    run_mode: str,
+    evidence_by_category: Mapping[str, Sequence[SocialRecord]],
 ) -> str:
     lines: list[str] = [
-        "# Amazon Social Opportunity Radar",
+        "# 亚马逊社媒产品机会雷达",
         "",
-        f"Date: {report_date}",
-        f"Focus: {focus}",
+        f"- 日期：{report_date}",
+        f"- 运行模式：{run_mode}",
+        f"- 关注范围：{focus}",
         "",
-        "## 1. Top Opportunities",
+        "## 1. 产品机会排序",
         "",
     ]
     if not opportunities:
-        lines.append("No qualified opportunities found today.")
+        lines.append("本轮没有形成可评分的产品机会；请先检查数据源健康状态和关键词覆盖。")
     for index, opportunity in enumerate(
-        sorted(opportunities, key=lambda item: item.total_score, reverse=True),
-        start=1,
+        sorted(opportunities, key=lambda item: item.total_score, reverse=True), start=1
     ):
         lines.extend(
             [
-                f"### Opportunity {index}: {opportunity.title}",
+                f"### 机会 {index}：{opportunity.title}",
                 *_score_lines(opportunity),
-                f"- Category: {opportunity.category}",
-                f"- Source: {', '.join(opportunity.source_platforms) or 'unknown'}",
-                f"- Customer pain: {opportunity.customer_pain_point}",
-                f"- Product idea: {opportunity.product_idea}",
-                f"- Amazon validation keywords: {', '.join(opportunity.amazon_validation_keywords) or 'not available'}",
-                f"- Suggested ASIN review check: {', '.join(opportunity.suggested_asins) or 'not available'}",
-                f"- Differentiation angle: {opportunity.differentiation_angle}",
-                f"- Risk: {opportunity.risk_notes}",
-                f"- Next action: {opportunity.next_action}",
+                f"- 类目：{opportunity.category}",
+                f"- 来源：{', '.join(opportunity.source_platforms) or '未知'}",
+                f"- 证据摘要：{opportunity.evidence_summary}",
+                *_evidence_lines(evidence_by_category.get(opportunity.category, ())),
+                f"- 用户痛点：{opportunity.customer_pain_point}",
+                f"- 产品建议：{opportunity.product_idea}",
+                f"- 亚马逊验证关键词：{', '.join(opportunity.amazon_validation_keywords) or '暂无'}",
+                f"- 建议核验 ASIN：{', '.join(opportunity.suggested_asins) or '暂无'}",
+                f"- 差异化方向：{opportunity.differentiation_angle}",
+                f"- 风险提示：{opportunity.risk_notes}",
+                f"- 下一步：{opportunity.next_action}",
                 "",
             ]
         )
     lines.extend(
         [
-            "## 2. Hot Trends",
-            "See Top Opportunities sorted by total score.",
+            "## 2. 热点趋势",
+            "热点按上述机会总分排序；仅作为选品研究线索，不构成需求结论。",
             "",
-            "## 3. High-Frequency Pain Points",
-            "See each opportunity's customer pain field.",
+            "## 3. 高频痛点",
+            "请优先核验机会中的用户痛点，避免把单条内容当作普遍需求。",
             "",
-            "## 4. Product Improvement Ideas",
-            "See each opportunity's differentiation angle.",
+            "## 4. 改款建议",
+            "请结合差异化方向、合规、成本和供应链能力进行立项判断。",
             "",
-            "## 5. New Product Inspiration",
-            "See each opportunity's product idea.",
+            "## 5. 新品灵感",
+            "请先完成亚马逊关键词、竞品和评论验证，再进入打样或采购。",
             "",
-            "## 6. Items Needing Amazon Review Validation",
-            "Items without suggested ASINs need competitor ASIN discovery before review validation.",
-            "",
-            "## 7. Data Source Health",
+            "## 6. 数据完整性提示",
         ]
     )
-    for name, health in sorted(source_health.items()):
-        lines.append(f"- {name}: {health.value}")
+    if run_mode == "样例数据":
+        lines.append("样例数据仅用于验证链路，不可作为真实用户需求、市场热度或产品立项证据。")
+    elif any(source_run.health is not SourceHealth.OK for source_run in source_runs):
+        lines.append("本轮存在未配置、降级、部分返回或失败的数据源；报告只反映已成功采集的证据。")
+    else:
+        lines.append("所有已启用数据源本轮返回正常；仍需人工核验内容相关性与商业可行性。")
+    lines.extend(["", "## 7. 数据源健康状态"])
+    if not source_runs:
+        lines.append("- 本轮没有执行数据源。")
+    else:
+        lines.extend(_source_run_line(source_run) for source_run in source_runs)
     return "\n".join(lines).strip() + "\n"

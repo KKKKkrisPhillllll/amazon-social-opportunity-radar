@@ -12,6 +12,15 @@ PAIN_TERMS = [
     "not durable",
     "broke",
     "leak",
+    "不好用",
+    "踩雷",
+    "后悔买",
+    "闲置",
+    "占地方",
+    "难清洗",
+    "不耐用",
+    "坏了",
+    "漏水",
 ]
 
 
@@ -54,9 +63,9 @@ def _amazon_review_validation(review_records: list[ReviewRecord]) -> int:
 
 def _product_fit(category: str, social_records: list[SocialRecord]) -> int:
     category_terms = {
-        "kitchen_appliances": ["appliance", "air fryer", "cooker"],
-        "kitchen_storage": ["storage", "organizer", "rack"],
-        "home_storage": ["home", "storage", "organizer"],
+        "kitchen_appliances": ["appliance", "air fryer", "cooker", "厨房电器", "空气炸锅"],
+        "kitchen_storage": ["storage", "organizer", "rack", "厨房收纳", "调料收纳"],
+        "home_storage": ["home", "storage", "organizer", "家居收纳", "收纳"],
     }
     text = " ".join(
         record.title + " " + record.text for record in social_records
@@ -85,8 +94,8 @@ def score_opportunity(
 ) -> Opportunity:
     platforms = sorted({record.platform for record in social_records})
     asins = sorted({record.asin for record in review_records if record.asin})
-    title = social_records[0].title if social_records else "Amazon product opportunity"
-    pain = "Potential user pain found in social discussion and Amazon reviews."
+    title = social_records[0].title if social_records else "亚马逊产品机会"
+    pain = "社媒讨论和亚马逊评论中发现潜在用户痛点。"
     if review_records:
         pain = review_records[0].title or pain
     breakdown = {
@@ -101,22 +110,21 @@ def score_opportunity(
         category=category,
         source_platforms=platforms,
         evidence_summary=(
-            f"{len(social_records)} social records and "
-            f"{len(review_records)} review records analyzed."
+            f"已分析 {len(social_records)} 条社媒记录和 "
+            f"{len(review_records)} 条评论记录。"
         ),
         customer_pain_point=pain,
         product_idea=(
-            "Turn repeated social pain points into a differentiated Amazon offer."
+            "将重复出现的社媒痛点转化为有差异化的亚马逊产品方案。"
         ),
         amazon_validation_keywords=keywords,
         suggested_asins=asins,
         differentiation_angle=(
-            "Improve the most repeated complaint before sourcing or listing."
+            "在采购或创建 Listing 前，优先解决重复出现最多的痛点。"
         ),
         risk_notes=(
-            "Validate keyword demand, review barrier, margin, compliance, and "
-            "supplier feasibility before launch."
+            "上架前需验证关键词需求、评论壁垒、利润率、合规和供应商可行性。"
         ),
-        next_action="Run Amazon keyword and competitor validation for this opportunity.",
+        next_action="针对该机会进行亚马逊关键词和竞品验证。",
         score_breakdown=breakdown,
     )
