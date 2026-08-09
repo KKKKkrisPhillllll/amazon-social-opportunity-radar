@@ -66,6 +66,8 @@ def test_cli_dry_run_prints_report(capsys):
     assert exit_code == 0
     assert "# 亚马逊社媒产品机会雷达" in captured.out
     assert "数据源健康状态" in captured.out
+    assert "## 用户画像与用户旅程图" not in captured.out
+    assert "```mermaid" not in captured.out
 
 
 def test_cli_subprocess_dry_run_uses_project_src_path():
