@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from radar.models import Opportunity, SocialRecord, SourceHealth, SourceRun
+from radar.models import (
+    Opportunity,
+    PersonaJourneyResult,
+    SocialRecord,
+    SourceHealth,
+    SourceRun,
+)
 
 SCORE_LABELS = {
     "social_heat": "社媒热度",
@@ -36,6 +42,46 @@ def _source_run_line(source_run: SourceRun) -> str:
     )
 
 
+def _mermaid_label(value: str) -> str:
+    return value.replace('"', "'").replace("\n", " ").replace("\r", " ")
+
+
+def _persona_journey_lines(result: PersonaJourneyResult, index: int) -> list[str]:
+    persona = result.persona
+    lines = [
+        f"### 画像 {index}：{persona.opportunity_title}",
+        f"- 行为型画像：{persona.behavioral_segment}",
+        f"- 使用场景：{persona.scenario}",
+        f"- 核心目标：{persona.core_goal}",
+        f"- 主要痛点：{'; '.join(persona.pain_points)}",
+        f"- 购买触发：{'; '.join(persona.purchase_triggers)}",
+        f"- 主要顾虑：{'; '.join(persona.concerns)}",
+        f"- 置信度：{persona.confidence}",
+        "- 公开证据：",
+    ]
+    lines.extend(f"  - {evidence.platform}：{evidence.url}" for evidence in persona.evidence)
+    lines.extend(["", "```mermaid", "flowchart LR"])
+    node_ids = [f"stage_{index}_{stage_index}" for stage_index, _ in enumerate(result.stages)]
+    for node_id, stage in zip(node_ids, result.stages):
+        label = _mermaid_label(stage.name)
+        lines.append(f'    {node_id}["{label}"]')
+    lines.extend(
+        f"    {left} --> {right}"
+        for left, right in zip(node_ids, node_ids[1:])
+    )
+    lines.extend(["```", ""])
+    for stage in result.stages:
+        evidence = ", ".join(stage.evidence_urls) or "待后续采集验证"
+        lines.extend(
+            [
+                f"- {stage.name}：{stage.user_need_or_action}；产品含义：{stage.product_implication}；"
+                f"置信度：{stage.confidence}；Evidence URL：{evidence}",
+            ]
+        )
+    lines.append("")
+    return lines
+
+
 def build_daily_markdown(
     opportunities: Sequence[Opportunity],
     source_runs: Sequence[SourceRun],
@@ -43,6 +89,7 @@ def build_daily_markdown(
     focus: str,
     run_mode: str,
     evidence_by_category: Mapping[str, Sequence[SocialRecord]],
+    persona_journeys: Sequence[PersonaJourneyResult] = (),
 ) -> str:
     lines: list[str] = [
         "# 亚马逊社媒产品机会雷达",
@@ -77,6 +124,10 @@ def build_daily_markdown(
                 "",
             ]
         )
+    if persona_journeys:
+        lines.extend(["## 用户画像与用户旅程图", ""])
+        for index, result in enumerate(persona_journeys, start=1):
+            lines.extend(_persona_journey_lines(result, index))
     lines.extend(
         [
             "## 2. 热点趋势",

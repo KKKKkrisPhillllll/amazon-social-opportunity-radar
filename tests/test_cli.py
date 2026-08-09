@@ -9,6 +9,47 @@ from radar.cli import main
 from radar.models import SocialRecord, SourceHealth, SourceRun
 
 
+def test_cli_builds_persona_journeys_only_for_gate_qualified_opportunities(
+    monkeypatch, tmp_path
+):
+    records = [
+        SocialRecord(
+            platform="reddit",
+            keyword="\u53a8\u623f\u6536\u7eb3",
+            url="https://reddit.example/1",
+            title="\u7a7a\u95f4\u95ee\u9898",
+            text="storage organizer hard to clean not durable broke",
+            engagement={"likes": 500, "favorites": 100, "comments": 50},
+        ),
+        SocialRecord(
+            platform="youtube",
+            keyword="\u53a8\u623f\u6536\u7eb3",
+            url="https://youtube.example/2",
+            title="\u6536\u7eb3\u65b9\u6848",
+            text="storage organizer hard to clean not durable broke",
+            engagement={"likes": 500, "favorites": 100, "comments": 50},
+        ),
+    ]
+
+    monkeypatch.setattr(
+        "radar.cli.run_configured_sources",
+        lambda *args, **kwargs: (
+            {"kitchen_storage": records},
+            [],
+            [SourceRun("test", "social", tuple(records), SourceHealth.OK, 2)],
+        ),
+    )
+
+    exit_code = main(
+        ["--output-dir", str(tmp_path), "--report-date", "2026-08-09"]
+    )
+
+    report = (tmp_path / "radar_report_2026_08_09.md").read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" in report
+    assert "```mermaid" in report
+
+
 def test_cli_dry_run_prints_report(capsys):
     exit_code = main(["--dry-run", "--use-sample-data", "--report-date", "2026-07-10"])
 

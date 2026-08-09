@@ -1,5 +1,67 @@
 from radar.models import Opportunity, SocialRecord, SourceHealth, SourceRun
 from radar.reports import build_daily_markdown
+from radar.journey_builder import JOURNEY_STAGES
+from radar.models import JourneyStage, PersonaEvidence, PersonaJourneyResult, UserPersona
+from test_helpers import make_opportunity
+
+
+def _persona_journey_result() -> PersonaJourneyResult:
+    persona = UserPersona(
+        opportunity_title="\u53f0\u9762\u6536\u7eb3\u673a\u4f1a",
+        category="kitchen_storage",
+        opportunity_score=75,
+        behavioral_segment="\u5c0f\u7a7a\u95f4\u6548\u7387\u578b",
+        scenario="\u5c0f\u53a8\u623f\u53f0\u9762\u6536\u7eb3",
+        core_goal="\u51cf\u5c11\u53d6\u653e\u548c\u6e05\u6d01\u6b65\u9aa4",
+        pain_points=("\u7a7a\u95f4\u4e0d\u8db3",),
+        purchase_triggers=("\u53cd\u590d\u51fa\u73b0\u7684\u53f0\u9762\u62e5\u6324",),
+        concerns=("\u5c3a\u5bf8\u9002\u914d",),
+        evidence=(
+            PersonaEvidence("reddit", "https://reddit.example/1", "\u53f0\u9762\u7a7a\u95f4\u592a\u5c0f"),
+            PersonaEvidence("youtube", "https://youtube.example/2", "\u5f88\u96be\u6e05\u6d01"),
+        ),
+        confidence="\u4e2d",
+    )
+    stages = tuple(
+        JourneyStage(
+            name=name,
+            observed_signals=("\u516c\u5f00\u8bc1\u636e\u4e2d\u7684\u76f8\u5173\u4fe1\u53f7",),
+            user_need_or_action="\u5b8c\u6210\u5f53\u524d\u9636\u6bb5\u4efb\u52a1",
+            product_implication="\u4f18\u5148\u9a8c\u8bc1\u5bf9\u5e94\u9636\u6bb5\u7684\u6469\u64e6",
+            evidence_urls=("https://reddit.example/1",),
+            confidence="\u4e2d",
+        )
+        for name in JOURNEY_STAGES
+    )
+    return PersonaJourneyResult(persona=persona, stages=stages)
+
+
+def test_report_renders_persona_journey_mermaid_and_public_evidence_links():
+    markdown = build_daily_markdown(
+        opportunities=[make_opportunity(total_score=75)],
+        source_runs=[],
+        report_date="2026-08-09",
+        focus="\u53a8\u623f\u6536\u7eb3",
+        run_mode="\u793a\u4f8b\u6570\u636e",
+        evidence_by_category={},
+        persona_journeys=[_persona_journey_result()],
+    )
+
+    assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" in markdown
+    assert "```mermaid" in markdown
+    assert "https://reddit.example/1" in markdown
+    assert JOURNEY_STAGES[0] in markdown
+    assert JOURNEY_STAGES[-1] in markdown
+    assert "author" not in markdown
+
+
+def test_report_does_not_render_persona_section_without_qualified_results():
+    markdown = build_daily_markdown(
+        opportunities=[], source_runs=[], report_date="2026-08-09",
+        focus="\u53a8\u623f\u6536\u7eb3", run_mode="\u793a\u4f8b\u6570\u636e", evidence_by_category={},
+    )
+
+    assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" not in markdown
 
 
 def _opportunity() -> Opportunity:

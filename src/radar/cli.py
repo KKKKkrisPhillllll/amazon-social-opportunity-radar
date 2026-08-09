@@ -6,12 +6,22 @@ from pathlib import Path
 from typing import Any
 
 from radar.collectors.sample import build_sample_records
-from radar.config import load_keywords, load_source_settings, require_env
+from radar.config import (
+    get_persona_journey_settings,
+    load_keywords,
+    load_source_settings,
+    require_env,
+)
+from radar.evidence import build_evidence_index
 from radar.integrations.feishu import send_feishu_markdown
-from radar.models import SourceHealth, SourceRun
+from radar.journey_builder import build_journey
+from radar.models import PersonaJourneyResult, SourceHealth, SourceRun
+from radar.opportunity_gate import evaluate_opportunity_gate
+from radar.persona_builder import build_persona
 from radar.reports import build_daily_markdown
 from radar.scoring import score_opportunity
 from radar.services.orchestrator import run_configured_sources
+from radar.voc import classify_voc, detect_innovation_signals, load_voc_config
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CATEGORY_LABELS = {
@@ -112,6 +122,49 @@ def main(argv: list[str] | None = None) -> int:
         for category, records in records_by_category.items()
         if records
     ]
+    evidence_index = build_evidence_index(records_by_category, review_records)
+    voc_taxonomy, signal_words = load_voc_config(PROJECT_ROOT / "config" / "voc_tags.yaml")
+    persona_settings = get_persona_journey_settings(source_settings)
+    all_evidence = tuple(
+        item for items in evidence_index.by_category.values() for item in items
+    )
+    voc_by_id = classify_voc(all_evidence, voc_taxonomy)
+    signals = detect_innovation_signals(all_evidence, signal_words)
+    gates = {
+        (opportunity.category, opportunity.title): evaluate_opportunity_gate(
+            opportunity,
+            evidence_index.by_category.get(opportunity.category, ()),
+            voc_by_id,
+            signals,
+            min_evidence_count=persona_settings["min_evidence_count"],
+        )
+        for opportunity in opportunities
+    }
+    qualified = [
+        opportunity
+        for opportunity in sorted(
+            opportunities, key=lambda item: item.total_score, reverse=True
+        )
+        if opportunity.total_score >= persona_settings["min_opportunity_score"]
+        and gates[(opportunity.category, opportunity.title)].eligible
+    ][: persona_settings["max_opportunities_per_report"]]
+    persona_journeys = [
+        PersonaJourneyResult(
+            persona=build_persona(
+                opportunity,
+                evidence_index.by_category.get(opportunity.category, ()),
+                voc_by_id,
+                gates[(opportunity.category, opportunity.title)],
+            ),
+            stages=build_journey(
+                opportunity,
+                evidence_index.by_category.get(opportunity.category, ()),
+                voc_by_id,
+                gates[(opportunity.category, opportunity.title)],
+            ),
+        )
+        for opportunity in qualified
+    ]
     markdown = build_daily_markdown(
         opportunities=opportunities,
         source_runs=source_runs,
@@ -119,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         focus=_focus_label(keyword_groups),
         run_mode=run_mode,
         evidence_by_category=records_by_category,
+        persona_journeys=persona_journeys,
     )
     if args.dry_run:
         print(markdown)
