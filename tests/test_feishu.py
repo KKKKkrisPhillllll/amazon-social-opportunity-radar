@@ -1,5 +1,8 @@
 import json
 
+import pytest
+import requests
+
 from radar.integrations.feishu import MAX_PAYLOAD_BYTES, send_feishu_markdown
 
 
@@ -83,3 +86,50 @@ def test_send_feishu_markdown_splits_long_chinese_persona_report():
 
     assert len(markdown.encode("utf-8")) > MAX_PAYLOAD_BYTES
     assert len(calls) > 1
+
+
+def test_send_feishu_markdown_limits_prepared_requests_json_bodies_for_long_chinese_text():
+    calls = []
+
+    def fake_post(url, json, timeout):
+        calls.append(json)
+        return FakeResponse()
+
+    send_feishu_markdown(
+        "https://example.feishu/webhook", "Daily Radar", "中" * 6_800, post=fake_post
+    )
+
+    prepared_bodies = [
+        requests.Request("POST", "https://example.invalid", json=payload)
+        .prepare()
+        .body
+        for payload in calls
+    ]
+    assert len(calls) > 1
+    assert all(
+        len(body.encode("utf-8") if isinstance(body, str) else body)
+        <= MAX_PAYLOAD_BYTES
+        for body in prepared_bodies
+    )
+
+
+@pytest.mark.parametrize("fence_length", [4, 5])
+def test_send_feishu_markdown_reopens_long_backtick_fences_with_matching_markers(
+    fence_length,
+):
+    calls = []
+
+    def fake_post(url, json, timeout):
+        calls.append(json)
+        return FakeResponse()
+
+    fence = "`" * fence_length
+    markdown = f"{fence}python\n" + ("A --> B\n" * 3_000) + f"{fence}\n"
+    send_feishu_markdown(
+        "https://example.feishu/webhook", "Daily Radar", markdown, post=fake_post
+    )
+
+    contents = [call["card"]["elements"][0]["text"]["content"] for call in calls]
+    assert len(contents) > 1
+    assert all(content.startswith(f"{fence}python\n") for content in contents)
+    assert all(content.endswith(f"{fence}\n") for content in contents)

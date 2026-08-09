@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Callable
 from typing import Any
 
@@ -33,35 +32,58 @@ def _payload(title: str, markdown: str) -> dict[str, Any]:
 
 
 def _payload_size(title: str, markdown: str) -> int:
-    return len(
-        json.dumps(
-            _payload(title, markdown), ensure_ascii=False, separators=(",", ":")
-        ).encode("utf-8")
-    )
+    body = requests.Request(
+        "POST", "https://example.invalid", json=_payload(title, markdown)
+    ).prepare().body
+    return len(body.encode("utf-8") if isinstance(body, str) else body or b"")
 
 
-def _close_code_block(markdown: str, in_code_block: bool) -> str:
-    if not in_code_block:
+def _close_code_block(markdown: str, code_fence: tuple[str, str] | None) -> str:
+    if code_fence is None:
         return markdown
     separator = "" if markdown.endswith("\n") else "\n"
-    return f"{markdown}{separator}{_CODE_FENCE}\n"
+    return f"{markdown}{separator}{code_fence[1]}\n"
 
 
-def _is_code_fence(line: str) -> bool:
-    return line.lstrip().startswith(_CODE_FENCE)
+def _reopen_code_block(code_fence: tuple[str, str]) -> str:
+    opening_line = code_fence[0]
+    return opening_line if opening_line.endswith("\n") else f"{opening_line}\n"
+
+
+def _fence_marker(line: str) -> str | None:
+    stripped = line.lstrip()
+    if not stripped.startswith(_CODE_FENCE):
+        return None
+    length = len(stripped) - len(stripped.lstrip("`"))
+    return stripped[:length]
+
+
+def _next_code_fence(
+    line: str, code_fence: tuple[str, str] | None
+) -> tuple[str, str] | None:
+    marker = _fence_marker(line)
+    if code_fence is None:
+        return (line, marker) if marker else None
+    if marker is None:
+        return code_fence
+
+    stripped = line.lstrip().rstrip("\r\n")
+    if len(marker) >= len(code_fence[1]) and not stripped[len(marker) :].strip():
+        return None
+    return code_fence
 
 
 def _largest_fitting_prefix(
     title: str,
     prefix: str,
     value: str,
-    in_code_block: bool,
+    code_fence: tuple[str, str] | None,
 ) -> str:
     low = 0
     high = len(value)
     while low < high:
         middle = (low + high + 1) // 2
-        candidate = _close_code_block(prefix + value[:middle], in_code_block)
+        candidate = _close_code_block(prefix + value[:middle], code_fence)
         if _payload_size(title, candidate) <= MAX_PAYLOAD_BYTES:
             low = middle
         else:
@@ -75,23 +97,22 @@ def _split_markdown(title: str, markdown: str) -> tuple[str, ...]:
 
     chunks: list[str] = []
     current = ""
-    in_code_block = False
+    code_fence: tuple[str, str] | None = None
 
     def flush() -> None:
         nonlocal current
         if current:
-            chunks.append(_close_code_block(current, in_code_block))
-            current = _CODE_FENCE + "\n" if in_code_block else ""
+            chunks.append(_close_code_block(current, code_fence))
+            current = _reopen_code_block(code_fence) if code_fence else ""
 
     for line in markdown.splitlines(keepends=True):
-        fence_line = _is_code_fence(line)
-        candidate_in_code_block = not in_code_block if fence_line else in_code_block
+        candidate_code_fence = _next_code_fence(line, code_fence)
         candidate = current + line
         if _payload_size(
-            title, _close_code_block(candidate, candidate_in_code_block)
+            title, _close_code_block(candidate, candidate_code_fence)
         ) <= MAX_PAYLOAD_BYTES:
             current = candidate
-            in_code_block = candidate_in_code_block
+            code_fence = candidate_code_fence
             continue
 
         if current:
@@ -99,11 +120,8 @@ def _split_markdown(title: str, markdown: str) -> tuple[str, ...]:
 
         remaining = line
         while remaining:
-            candidate_in_code_block = (
-                not in_code_block if fence_line else in_code_block
-            )
             piece = _largest_fitting_prefix(
-                title, current, remaining, candidate_in_code_block
+                title, current, remaining, candidate_code_fence
             )
             if not piece:
                 raise ValueError("Feishu webhook payload exceeds the 20KB limit")
@@ -112,10 +130,10 @@ def _split_markdown(title: str, markdown: str) -> tuple[str, ...]:
             if remaining:
                 flush()
 
-        in_code_block = candidate_in_code_block
+        code_fence = candidate_code_fence
 
     if current:
-        chunks.append(_close_code_block(current, in_code_block))
+        chunks.append(_close_code_block(current, code_fence))
     return tuple(chunks or ("",))
 
 
