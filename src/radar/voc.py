@@ -10,6 +10,14 @@ from radar.evidence import EvidenceItem
 
 
 _GENERIC_CONTRAST_WORDS = {"but", "但是", "不过"}
+_REQUIRED_SIGNAL_GROUPS = (
+    "workarounds",
+    "tradeoffs",
+    "over_served",
+    "extreme_users",
+    "counter_evidence",
+)
+_REQUIRED_DIMENSION_CODES = {f"D{index:02d}" for index in range(1, 23)}
 
 
 def _hit(text: str, keyword: str) -> bool:
@@ -61,10 +69,52 @@ def detect_innovation_signals(
 
 def load_voc_config(path: str | Path) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     with Path(path).open("r", encoding="utf-8") as handle:
-        data = yaml.safe_load(handle) or {}
-    taxonomy = data.get("taxonomy", {})
+        try:
+            data = yaml.safe_load(handle)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"invalid YAML in VOC config: {exc}") from exc
+    if not isinstance(data, Mapping):
+        raise ValueError("top-level YAML must be a mapping")
+
+    taxonomy = data.get("taxonomy")
+    if not isinstance(taxonomy, Mapping):
+        raise ValueError("taxonomy must be a mapping")
+
+    dimension_codes: set[str] = set()
+    for name, words in taxonomy.items():
+        if not isinstance(name, str) or not re.match(r"^D\d{2}(?:_|$)", name):
+            raise ValueError(f"taxonomy dimension name is invalid: {name!r}")
+        code = name[:3]
+        if code in dimension_codes:
+            raise ValueError(f"taxonomy contains duplicate dimension code: {code}")
+        dimension_codes.add(code)
+        _validate_word_list(words, f"taxonomy dimension {name}")
+
+    missing_dimensions = _REQUIRED_DIMENSION_CODES - dimension_codes
+    extra_dimensions = dimension_codes - _REQUIRED_DIMENSION_CODES
+    if missing_dimensions or extra_dimensions:
+        raise ValueError(
+            "taxonomy must contain all dimensions D01-D22"
+            + (f"; missing: {sorted(missing_dimensions)}" if missing_dimensions else "")
+            + (f"; unexpected: {sorted(extra_dimensions)}" if extra_dimensions else "")
+        )
+
     signals = {key: value for key, value in data.items() if key != "taxonomy"}
-    return (
-        {name: list(words or []) for name, words in taxonomy.items()},
-        {name: list(words or []) for name, words in signals.items()},
-    )
+    missing_signals = set(_REQUIRED_SIGNAL_GROUPS) - set(signals)
+    extra_signals = set(signals) - set(_REQUIRED_SIGNAL_GROUPS)
+    if missing_signals or extra_signals:
+        raise ValueError(
+            "signals must contain exactly workarounds, tradeoffs, over_served, extreme_users, counter_evidence"
+            + (f"; missing: {sorted(missing_signals)}" if missing_signals else "")
+            + (f"; unexpected: {sorted(extra_signals)}" if extra_signals else "")
+        )
+    for name in _REQUIRED_SIGNAL_GROUPS:
+        _validate_word_list(signals[name], f"signals group {name}")
+
+    return ({name: list(words) for name, words in taxonomy.items()},
+            {name: list(signals[name]) for name in _REQUIRED_SIGNAL_GROUPS})
+
+
+def _validate_word_list(words: object, label: str) -> None:
+    if not isinstance(words, list) or not words or not all(isinstance(word, str) for word in words):
+        raise ValueError(f"{label} must be a non-empty list of strings")

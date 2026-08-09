@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from radar.evidence import EvidenceItem
 from radar.voc import classify_voc, detect_innovation_signals, load_voc_config
 
@@ -44,6 +46,22 @@ def test_english_keywords_use_token_boundaries_and_ignore_empty_words():
     assert themes["E-0004"] == ("D01",)
 
 
+def test_detect_signals_use_english_boundaries_chinese_contains_and_ignore_empty_words():
+    items = [
+        _item("E-0007", "wanted design"),
+        _item("E-0008", "ad"),
+        _item("E-0009", "桌面空间太小"),
+    ]
+
+    signals = detect_innovation_signals(
+        items,
+        {"workarounds": ["", "ad"], "over_served": ["空间"]},
+    )
+
+    assert signals["workarounds"] == ("E-0008",)
+    assert signals["over_served"] == ("E-0009",)
+
+
 def test_generic_but_does_not_create_tradeoff_without_second_contrast_signal():
     items = [_item("E-0005", "It works, but it is compact."), _item("E-0006", "It works, but the trade-off is capacity.")]
 
@@ -67,3 +85,56 @@ def test_load_voc_config_contains_22_dimensions_and_signal_groups():
     ]]
     assert set(signals) == {"workarounds", "tradeoffs", "over_served", "extreme_users", "counter_evidence"}
     assert all(isinstance(words, list) for words in [*taxonomy.values(), *signals.values()])
+
+
+def _valid_voc_yaml() -> str:
+    dimensions = "\n".join(f"  D{index:02d}_dimension_{index}: [word_{index}]" for index in range(1, 23))
+    signal_groups = "\n".join(f"{name}: [signal_{name}]" for name in [
+        "workarounds", "tradeoffs", "over_served", "extreme_users", "counter_evidence"
+    ])
+    return f"taxonomy:\n{dimensions}\n{signal_groups}\n"
+
+
+@pytest.mark.parametrize(
+    ("content", "message"),
+    [
+        ("", "top-level YAML must be a mapping"),
+        ("- item", "top-level YAML must be a mapping"),
+        ("taxonomy: [", "invalid YAML"),
+        ("taxonomy: []\n", "taxonomy must be a mapping"),
+        ("taxonomy:\n  D01_dimension_1: [word]\n", "taxonomy must contain all dimensions D01-D22"),
+        ("taxonomy:\n  D01_dimension_1: word\n", "taxonomy dimension D01_dimension_1 must be a non-empty list of strings"),
+    ],
+)
+def test_load_voc_config_rejects_invalid_taxonomy(tmp_path, content, message):
+    path = tmp_path / "voc.yaml"
+    path.write_text(content, encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_voc_config(path)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        _valid_voc_yaml().replace("workarounds: [signal_workarounds]", "", 1),
+        _valid_voc_yaml().replace("tradeoffs: [signal_tradeoffs]", "tradeoffs: signal_tradeoffs", 1),
+        _valid_voc_yaml().replace("counter_evidence: [signal_counter_evidence]", "counter_evidence: []", 1),
+    ],
+)
+def test_load_voc_config_rejects_invalid_signal_groups(tmp_path, content):
+    path = tmp_path / "voc.yaml"
+    path.write_text(content, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="signals"):
+        load_voc_config(path)
+
+
+def test_load_voc_config_preserves_taxonomy_order(tmp_path):
+    path = tmp_path / "voc.yaml"
+    path.write_text(_valid_voc_yaml(), encoding="utf-8")
+
+    taxonomy, signals = load_voc_config(path)
+
+    assert list(taxonomy) == [f"D{index:02d}_dimension_{index}" for index in range(1, 23)]
+    assert set(signals) == {"workarounds", "tradeoffs", "over_served", "extreme_users", "counter_evidence"}
