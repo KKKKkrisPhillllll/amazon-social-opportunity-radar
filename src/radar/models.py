@@ -62,6 +62,8 @@ class ReviewRecord:
 
 @dataclass(frozen=True)
 class Opportunity:
+    """A scored opportunity; downstream gates must not mutate its score."""
+
     title: str
     category: str
     source_platforms: list[str]
