@@ -616,7 +616,7 @@ def build_persona(opportunity, evidence, voc, gate):
         purchase_triggers=("重复出现的使用摩擦",),
         concerns=("价格、耐用性、清洁维护和适配性",),
         evidence=tuple(
-            PersonaEvidence(item.platform, item.url, item.title or item.text[:80])
+            PersonaEvidence(item.platform, item.url, item.summary[:80])
             for item in evidence[:5]
         ),
         confidence=confidence,
