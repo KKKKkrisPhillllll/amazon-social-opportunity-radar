@@ -406,8 +406,8 @@ from test_helpers import make_opportunity
 
 def test_gate_requires_two_independent_public_sources():
     evidence = [
-        EvidenceItem("E-0001", "reddit", "https://reddit.example/1", "kitchen_storage", "", "占空间", ()),
-        EvidenceItem("E-0002", "reddit", "https://reddit.example/2", "kitchen_storage", "", "占空间", ()),
+        EvidenceItem("E-0001", "reddit", "https://reddit.example/1", "kitchen_storage", "占空间", 0),
+        EvidenceItem("E-0002", "reddit", "https://reddit.example/2", "kitchen_storage", "占空间", 0),
     ]
     gate = evaluate_opportunity_gate(
         opportunity=make_opportunity(total_score=75),
@@ -422,8 +422,8 @@ def test_gate_requires_two_independent_public_sources():
 
 def test_gate_accepts_high_score_with_two_platforms_and_exposes_counter_evidence():
     evidence = [
-        EvidenceItem("E-0001", "reddit", "https://reddit.example/1", "kitchen_storage", "", "占空间", ()),
-        EvidenceItem("E-0002", "youtube", "https://youtube.example/2", "kitchen_storage", "", "太占台面", ()),
+        EvidenceItem("E-0001", "reddit", "https://reddit.example/1", "kitchen_storage", "占空间", 0),
+        EvidenceItem("E-0002", "youtube", "https://youtube.example/2", "kitchen_storage", "太占台面", 0),
     ]
     gate = evaluate_opportunity_gate(
         opportunity=make_opportunity(total_score=75),
@@ -474,6 +474,7 @@ def evaluate_opportunity_gate(
     min_evidence_count: int = 2,
 ) -> OpportunityGate:
     relevant = [item for item in evidence if item.category == opportunity.category]
+    relevant_ids = {item.evidence_id for item in relevant}
     platforms = {item.platform for item in relevant}
     gaps: list[str] = []
     strengths: list[str] = []
@@ -485,9 +486,9 @@ def evaluate_opportunity_gate(
         gaps.append("至少需要 2 个独立来源")
     if any(voc.get(item.evidence_id) for item in relevant):
         strengths.append("存在可归类的 VOC 信号")
-    if signals.get("workarounds"):
+    if set(signals.get("workarounds", ())) & relevant_ids:
         strengths.append("发现用户替代方案或自救行为")
-    has_counter = bool(set(signals.get("counter_evidence", ())) & {item.evidence_id for item in relevant})
+    has_counter = bool(set(signals.get("counter_evidence", ())) & relevant_ids)
     if has_counter:
         gaps.append("存在反向证据，需要人工核验适用边界")
     score_ok = opportunity.total_score >= 60
