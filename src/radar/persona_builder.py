@@ -80,6 +80,8 @@ def build_persona(
         segment = "高频重度使用型"
     else:
         segment = "一般任务型"
+    if confidence == "低":
+        segment = "待验证用户类型"
 
     pain_points = themes or ("当前没有足够主题证据，待验证",)
     if confidence == "低" and PENDING_VALIDATION not in pain_points:

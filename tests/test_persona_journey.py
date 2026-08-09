@@ -47,6 +47,30 @@ def test_insufficient_evidence_is_low_confidence_and_neutral():
     assert any("待验证" in item for item in persona.pain_points)
 
 
+def test_low_confidence_summary_with_space_uses_neutral_behavioral_segment():
+    opportunity = make_opportunity()
+    evidence = [
+        EvidenceItem(
+            "E-0001",
+            "reddit",
+            "https://reddit.example/1",
+            "kitchen_storage",
+            "小厨房空间占用明显，用户正在寻找更省空间的方案",
+            1,
+        )
+    ]
+
+    persona = build_persona(
+        opportunity,
+        evidence,
+        {},
+        make_low_evidence_gate(),
+    )
+
+    assert persona.confidence == "低"
+    assert persona.behavioral_segment == "待验证用户类型"
+
+
 def test_blank_summaries_do_not_consume_evidence_quota_or_confidence():
     opportunity = make_opportunity()
     evidence = [
