@@ -34,3 +34,27 @@
 
 - 证据索引按简报约定暂不消费 `review_records`；亚马逊评论没有公开 URL，因此不会被加入公开 URL 证据索引。
 - 未实现 VOC 匹配、Opportunity Gate、用户画像、用户旅程、报告或 CLI 集成，留给后续模块。
+## Review Fix Record (2026-08-09)
+
+### Modified Files
+
+- `src/radar/evidence.py`: reduced `EvidenceItem` to anonymous aggregate fields, added summary/comment count, public URL validation, normalized URL deduplication, and deterministic `E-####` IDs.
+- `src/radar/config.py`: validates positive integer `persona_journey` limits when the section exists.
+- `tests/test_evidence.py`: added field-contract, summary/count, URL boundary, normalized deduplication, and reordered-input ID regression tests.
+- `tests/test_config.py`: added valid and invalid `persona_journey` boundary tests.
+- `tests/test_helpers.py`: synchronized `EvidenceItem` helper construction.
+
+### TDD Red/Green Results
+
+- Red: `py -m pytest tests/test_evidence.py -q` -> `4 failed, 3 passed`; failures covered the old comments/title/text contract, order-dependent IDs, weak URL validation, and missing summary.
+- Red: `py -m pytest tests/test_config.py::test_load_source_settings_accepts_positive_persona_journey_limits tests/test_config.py::test_load_source_settings_rejects_invalid_persona_journey_limits -q` -> `1 passed, 4 failed`; old config loading did not validate limits.
+- Green: `py -m pytest tests/test_evidence.py tests/test_config.py -q` -> `18 passed`.
+- Green: `py -m pytest tests/test_evidence.py tests/test_config.py tests/test_models.py tests/test_helpers.py tests/test_scoring.py tests/test_reports.py -q` -> `24 passed`.
+- Full: `py -m pytest -q` -> `57 passed`.
+- `git diff --check` produced no output.
+
+### Risks
+
+- `ruff` is not installed in the environment, so ruff static checking could not be run.
+- IDs are stable for the same evidence set under input/category-map reordering. Adding or removing other evidence can shift later readable sequence numbers by design.
+- No collectors, scoring, report CLI, README, or later VOC/Gate/persona/journey modules were changed; no network requests or ZIP reads were added.

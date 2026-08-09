@@ -29,29 +29,45 @@ def test_evidence_index_filters_invalid_urls_and_keeps_stable_ids():
     assert index.by_id["E-0001"].url == "https://reddit.example/post-1"
 
 
-def test_evidence_index_deduplicates_urls_and_preserves_input_order():
+def test_evidence_index_deduplicates_normalized_urls():
     records = [
-        _record(" https://reddit.example/first ", title=" first "),
+        _record(" https://REDDIT.example/first/#fragment ", title=" first "),
         _record("https://reddit.example/first", title="duplicate"),
         _record("http://reddit.example/second", title=" second "),
     ]
 
     index = build_evidence_index({"kitchen_storage": records}, [])
 
-    assert tuple(item.evidence_id for item in index.by_category["kitchen_storage"]) == (
-        "E-0001",
-        "E-0002",
-    )
-    assert [item.title for item in index.by_category["kitchen_storage"]] == ["first", "second"]
-    assert list(index.by_id) == ["E-0001", "E-0002"]
+    assert [item.url for item in index.by_category["kitchen_storage"]] == [
+        "http://reddit.example/second",
+        "https://reddit.example/first",
+    ]
 
 
-def test_evidence_item_keeps_empty_text_and_only_public_evidence_fields():
+def test_evidence_ids_are_stable_when_records_and_categories_are_reordered():
+    records = {
+        "kitchen_storage": [_record("https://reddit.example/b")],
+        "kitchen_appliances": [_record("https://reddit.example/a")],
+    }
+    reordered = {
+        "kitchen_appliances": list(reversed(records["kitchen_appliances"])),
+        "kitchen_storage": list(reversed(records["kitchen_storage"])),
+    }
+
+    first = build_evidence_index(records, [])
+    second = build_evidence_index(reordered, [])
+
+    first_ids = {(item.category, item.url): item.evidence_id for item in first.by_id.values()}
+    second_ids = {(item.category, item.url): item.evidence_id for item in second.by_id.values()}
+    assert first_ids == second_ids
+
+
+def test_evidence_item_keeps_only_anonymous_aggregate_fields():
     record = _record(
         "https://reddit.example/post-1",
-        title=" ",
-        text=" ",
-        comments=[" useful comment ", "   "],
+        title="标题",
+        text="正文",
+        comments=["private comment", "another private comment"],
     )
     record = SocialRecord(
         platform=record.platform,
@@ -65,20 +81,19 @@ def test_evidence_item_keeps_empty_text_and_only_public_evidence_fields():
 
     item = build_evidence_index({"kitchen_storage": [record]}, []).by_id["E-0001"]
 
-    assert item.title == ""
-    assert item.text == ""
-    assert item.comments == ("useful comment",)
+    assert item.summary == "标题 正文"
+    assert item.comment_count == 2
     assert set(item.__dataclass_fields__) == {
         "evidence_id",
         "platform",
         "url",
         "category",
-        "title",
-        "text",
-        "comments",
+        "summary",
+        "comment_count",
         "asin",
     }
     assert not hasattr(item, "author")
+    assert not hasattr(item, "comments")
 
 
 def test_review_records_do_not_count_as_public_url_evidence():
@@ -93,3 +108,35 @@ def test_review_records_do_not_count_as_public_url_evidence():
 
     assert index.by_category == {}
     assert index.by_id == {}
+
+
+def test_public_url_rejects_local_or_credential_bearing_urls():
+    invalid_urls = [
+        "",
+        "   ",
+        "ftp://reddit.example/post",
+        "https://localhost/post",
+        "https://localhost.localdomain/post",
+        "https://127.0.0.1/post",
+        "https://10.0.0.2/post",
+        "https://172.16.0.2/post",
+        "https://192.168.1.2/post",
+        "https://169.254.10.2/post",
+        "https://0.0.0.0/post",
+        "https://[::1]/post",
+        "https://user:password@reddit.example/post",
+    ]
+
+    index = build_evidence_index(
+        {"kitchen_storage": [_record(url) for url in invalid_urls]}, []
+    )
+
+    assert index.by_category["kitchen_storage"] == ()
+
+
+def test_public_url_accepts_http_https_public_hosts():
+    records = [_record("https://reddit.example/post"), _record("http://8.8.8.8/post")]
+
+    index = build_evidence_index({"kitchen_storage": records}, [])
+
+    assert len(index.by_category["kitchen_storage"]) == 2

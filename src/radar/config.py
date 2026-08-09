@@ -31,6 +31,18 @@ def load_source_settings(path: str | Path) -> dict[str, Any]:
     for key in ("feishu", "apify", "scrapecreators", "praw_reddit", "amazon_reviews"):
         if key not in data:
             raise ValueError(f"sources config missing required section: {key}")
+    persona_journey = data.get("persona_journey")
+    if persona_journey is not None:
+        if not isinstance(persona_journey, dict):
+            raise ValueError("persona_journey must be a mapping")
+        for field in (
+            "min_opportunity_score",
+            "max_opportunities_per_report",
+            "min_evidence_count",
+        ):
+            value = persona_journey.get(field)
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise ValueError(f"persona_journey.{field} must be a positive integer")
     return data
 
 

@@ -21,8 +21,8 @@ def make_opportunity(total_score=75, category="kitchen_storage"):
 
 def make_two_platform_evidence():
     return [
-        EvidenceItem("E-0001", "reddit", "https://reddit.example/1", "kitchen_storage", "", "台面空间太小", ()),
-        EvidenceItem("E-0002", "youtube", "https://youtube.example/2", "kitchen_storage", "", "很难清洁", ()),
+        EvidenceItem("E-0001", "reddit", "https://reddit.example/1", "kitchen_storage", "台面空间太小", 0),
+        EvidenceItem("E-0002", "youtube", "https://youtube.example/2", "kitchen_storage", "很难清洁", 0),
     ]
 
 
