@@ -14,8 +14,10 @@ def test_public_docs_describe_the_runnable_windows_sample_flow():
     assert "py -3 -m radar.cli --use-sample-data --output-dir outputs" in readme
     assert "发现需求 -> 搜索方案 -> 对比决策 -> 购买 -> 使用 -> 反馈" in readme
     assert "公开证据链接" in readme
-    assert "ruff" in verification_report
-    assert "未执行" in verification_report
+    assert "py -3 -m ruff check src tests" in verification_report
+    assert "通过" in verification_report
+    assert "真实 API 凭据" in verification_report
+    assert "未在本次本地回归中验证" in verification_report
     assert "outputs/radar_report_" in verification_report
     assert "真实 API 凭据" in verification_report
     assert "画像/旅程" in verification_report
