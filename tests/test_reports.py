@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from radar.models import Opportunity, SocialRecord, SourceHealth, SourceRun
 from radar.reports import build_daily_markdown
 from radar.journey_builder import JOURNEY_STAGES
@@ -49,7 +51,9 @@ def test_report_renders_persona_journey_mermaid_and_public_evidence_links():
 
     assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" in markdown
     assert "```mermaid" in markdown
+    assert "reddit" in markdown
     assert "https://reddit.example/1" in markdown
+    assert "\u53f0\u9762\u7a7a\u95f4\u592a\u5c0f" in markdown
     assert JOURNEY_STAGES[0] in markdown
     assert JOURNEY_STAGES[-1] in markdown
     assert "author" not in markdown
@@ -62,6 +66,33 @@ def test_report_does_not_render_persona_section_without_qualified_results():
     )
 
     assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" not in markdown
+
+
+def test_report_does_not_render_persona_section_for_low_score_result():
+    result = _persona_journey_result()
+    low_score = replace(result, persona=replace(result.persona, opportunity_score=59))
+
+    markdown = build_daily_markdown(
+        opportunities=[], source_runs=[], report_date="2026-08-09",
+        focus="\u53a8\u623f\u6536\u7eb3", run_mode="\u771f\u5b9e\u6570\u636e", evidence_by_category={},
+        persona_journeys=[low_score],
+    )
+
+    assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" not in markdown
+    assert "```mermaid" not in markdown
+
+
+def test_report_does_not_render_persona_section_for_gate_ineligible_result():
+    result = replace(_persona_journey_result(), gate_eligible=False)
+
+    markdown = build_daily_markdown(
+        opportunities=[], source_runs=[], report_date="2026-08-09",
+        focus="\u53a8\u623f\u6536\u7eb3", run_mode="\u771f\u5b9e\u6570\u636e", evidence_by_category={},
+        persona_journeys=[result],
+    )
+
+    assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" not in markdown
+    assert "```mermaid" not in markdown
 
 
 def _opportunity() -> Opportunity:

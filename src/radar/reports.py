@@ -59,7 +59,10 @@ def _persona_journey_lines(result: PersonaJourneyResult, index: int) -> list[str
         f"- 置信度：{persona.confidence}",
         "- 公开证据：",
     ]
-    lines.extend(f"  - {evidence.platform}：{evidence.url}" for evidence in persona.evidence)
+    lines.extend(
+        f"  - 平台：{evidence.platform}；URL：{evidence.url}；摘要：{evidence.summary}"
+        for evidence in persona.evidence
+    )
     lines.extend(["", "```mermaid", "flowchart LR"])
     node_ids = [f"stage_{index}_{stage_index}" for stage_index, _ in enumerate(result.stages)]
     for node_id, stage in zip(node_ids, result.stages):
@@ -124,9 +127,14 @@ def build_daily_markdown(
                 "",
             ]
         )
-    if persona_journeys:
+    qualified_persona_journeys = [
+        result
+        for result in persona_journeys
+        if result.gate_eligible and result.persona.opportunity_score >= 60
+    ]
+    if qualified_persona_journeys:
         lines.extend(["## 用户画像与用户旅程图", ""])
-        for index, result in enumerate(persona_journeys, start=1):
+        for index, result in enumerate(qualified_persona_journeys, start=1):
             lines.extend(_persona_journey_lines(result, index))
     lines.extend(
         [

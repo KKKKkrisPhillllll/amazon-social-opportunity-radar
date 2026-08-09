@@ -162,6 +162,7 @@ def main(argv: list[str] | None = None) -> int:
                 voc_by_id,
                 gates[(opportunity.category, opportunity.title)],
             ),
+            gate_eligible=gates[(opportunity.category, opportunity.title)].eligible,
         )
         for opportunity in qualified
     ]

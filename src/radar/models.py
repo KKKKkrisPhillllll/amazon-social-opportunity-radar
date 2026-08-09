@@ -125,3 +125,4 @@ class JourneyStage:
 class PersonaJourneyResult:
     persona: UserPersona
     stages: tuple[JourneyStage, ...]
+    gate_eligible: bool = True

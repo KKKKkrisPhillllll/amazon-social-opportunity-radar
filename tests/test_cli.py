@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from radar.cli import main
+from radar.reports import build_daily_markdown
 from radar.models import SocialRecord, SourceHealth, SourceRun
 
 
@@ -40,6 +41,13 @@ def test_cli_builds_persona_journeys_only_for_gate_qualified_opportunities(
         ),
     )
 
+    captured = {}
+
+    def capture_persona_journeys(**kwargs):
+        captured["persona_journeys"] = kwargs["persona_journeys"]
+        return build_daily_markdown(**kwargs)
+
+    monkeypatch.setattr("radar.cli.build_daily_markdown", capture_persona_journeys)
     exit_code = main(
         ["--output-dir", str(tmp_path), "--report-date", "2026-08-09"]
     )
@@ -48,6 +56,7 @@ def test_cli_builds_persona_journeys_only_for_gate_qualified_opportunities(
     assert exit_code == 0
     assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" in report
     assert "```mermaid" in report
+    assert all(result.gate_eligible for result in captured["persona_journeys"])
 
 
 def test_cli_dry_run_prints_report(capsys):
