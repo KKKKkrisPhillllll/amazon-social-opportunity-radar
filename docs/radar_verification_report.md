@@ -17,8 +17,9 @@
 | 单元测试 | `py -3 -m pytest -q`：104 项通过，耗时 4.33 秒。 |
 | 编译检查 | `py -3 -m compileall -q src tests`：通过。 |
 | Git 差异检查 | `git diff --check`：通过，无空白错误；仅提示 Git 的 LF/CRLF 工作区转换。 |
-| 静态检查 | `ruff` 当前未安装，未执行；不会将其记为通过。 |
+| 静态检查 | `py -3 -m ruff check src tests`：通过。 |
 | 样例 CLI | `$env:PYTHONPATH='src'; py -3 -m radar.cli --use-sample-data --output-dir outputs`：通过，生成 `outputs/radar_report_2026_08_09.md`。 |
+| 无凭据真实 CLI | `--max-keywords-per-category 1 --amazon-review-asin B0D3XTZVS5`：通过；报告写入本地，来源显示 `NOT_CONFIGURED`，未发送飞书。 |
 
 ## 凭据与样例边界
 

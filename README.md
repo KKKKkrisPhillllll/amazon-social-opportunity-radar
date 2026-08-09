@@ -94,6 +94,7 @@ py -3 -m radar.cli --send-feishu --max-keywords-per-category 1
 $env:PYTHONPATH='src'
 py -3 -m pytest -q
 py -3 -m compileall -q src tests
+py -3 -m ruff check src tests
 py -3 -m pip check
 git diff --check
 ```
