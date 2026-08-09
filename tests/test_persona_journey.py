@@ -1,15 +1,15 @@
 import pytest
-
-from radar.journey_builder import build_journey
-from radar.persona_builder import build_persona
-from radar.evidence import EvidenceItem
-from radar.models import PersonaEvidence
 from test_helpers import (
     make_eligible_gate,
     make_low_evidence_gate,
     make_opportunity,
     make_two_platform_evidence,
 )
+
+from radar.evidence import EvidenceItem
+from radar.journey_builder import build_journey
+from radar.models import PersonaEvidence
+from radar.persona_builder import build_persona
 
 
 def test_high_score_opportunity_gets_behavioral_persona_and_six_stages():

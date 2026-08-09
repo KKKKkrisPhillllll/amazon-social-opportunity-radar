@@ -6,7 +6,6 @@ from radar.evidence import EvidenceItem, _normalize_public_url
 from radar.models import Opportunity, PersonaEvidence, UserPersona
 from radar.opportunity_gate import OpportunityGate
 
-
 PENDING_VALIDATION = "证据不足，待验证"
 
 

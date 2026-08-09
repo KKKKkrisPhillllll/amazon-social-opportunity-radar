@@ -1,6 +1,7 @@
+from test_helpers import make_opportunity
+
 from radar.evidence import EvidenceItem
 from radar.opportunity_gate import evaluate_opportunity_gate
-from test_helpers import make_opportunity
 
 
 def _evidence(evidence_id: str, platform: str, category: str = "kitchen_storage") -> EvidenceItem:

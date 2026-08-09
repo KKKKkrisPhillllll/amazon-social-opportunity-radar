@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from itertools import pairwise
 
 from radar.models import (
     Opportunity,
@@ -70,15 +71,17 @@ def _persona_journey_lines(result: PersonaJourneyResult, index: int) -> list[str
         lines.append(f'    {node_id}["{label}"]')
     lines.extend(
         f"    {left} --> {right}"
-        for left, right in zip(node_ids, node_ids[1:])
+        for left, right in pairwise(node_ids)
     )
     lines.extend(["```", ""])
     for stage in result.stages:
         evidence = ", ".join(stage.evidence_urls) or "待后续采集验证"
         lines.extend(
             [
-                f"- {stage.name}：{stage.user_need_or_action}；产品含义：{stage.product_implication}；"
-                f"置信度：{stage.confidence}；Evidence URL：{evidence}",
+                (
+                    f"- {stage.name}：{stage.user_need_or_action}；产品含义：{stage.product_implication}；"
+                    f"置信度：{stage.confidence}；Evidence URL：{evidence}"
+                ),
             ]
         )
     lines.append("")

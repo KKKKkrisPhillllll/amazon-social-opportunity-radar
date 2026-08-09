@@ -1,10 +1,19 @@
 from dataclasses import replace
 
-from radar.models import Opportunity, SocialRecord, SourceHealth, SourceRun
-from radar.reports import build_daily_markdown
-from radar.journey_builder import JOURNEY_STAGES
-from radar.models import JourneyStage, PersonaEvidence, PersonaJourneyResult, UserPersona
 from test_helpers import make_opportunity
+
+from radar.journey_builder import JOURNEY_STAGES
+from radar.models import (
+    JourneyStage,
+    Opportunity,
+    PersonaEvidence,
+    PersonaJourneyResult,
+    SocialRecord,
+    SourceHealth,
+    SourceRun,
+    UserPersona,
+)
+from radar.reports import build_daily_markdown
 
 
 def _persona_journey_result() -> PersonaJourneyResult:

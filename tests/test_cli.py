@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 from radar.cli import main
-from radar.reports import build_daily_markdown
 from radar.models import SocialRecord, SourceHealth, SourceRun
+from radar.reports import build_daily_markdown
 
 
 def test_cli_builds_persona_journeys_only_for_gate_qualified_opportunities(

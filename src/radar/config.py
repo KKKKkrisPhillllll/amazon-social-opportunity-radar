@@ -7,7 +7,6 @@ from typing import Any
 
 import yaml
 
-
 DEFAULT_PERSONA_JOURNEY_SETTINGS = {
     "min_opportunity_score": 60,
     "max_opportunities_per_report": 3,
@@ -48,7 +47,7 @@ def get_persona_journey_settings(source_settings: Mapping[str, Any]) -> dict[str
     if configured is None:
         return DEFAULT_PERSONA_JOURNEY_SETTINGS.copy()
     if not isinstance(configured, Mapping):
-        raise ValueError("persona_journey must be a mapping")
+        raise ValueError("persona_journey must be a mapping")  # noqa: TRY004
 
     settings: dict[str, int] = {}
     for field in DEFAULT_PERSONA_JOURNEY_SETTINGS:

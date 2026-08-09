@@ -5,8 +5,12 @@ from collections.abc import Mapping, Sequence
 from radar.evidence import EvidenceItem
 from radar.models import JOURNEY_STAGE_NAMES, JourneyStage, Opportunity
 from radar.opportunity_gate import OpportunityGate
-from radar.persona_builder import _confidence, _relevant_evidence, _themes, _validate_gate
-
+from radar.persona_builder import (
+    _confidence,
+    _relevant_evidence,
+    _themes,
+    _validate_gate,
+)
 
 JOURNEY_STAGES = JOURNEY_STAGE_NAMES
 PENDING_STAGE = "当前未发现直接公开证据，待后续采集验证"

@@ -1,6 +1,6 @@
-from radar.models import ReviewRecord, SocialRecord
 from radar.evidence import EvidenceItem
 from radar.journey_builder import build_journey
+from radar.models import ReviewRecord, SocialRecord
 from radar.opportunity_gate import evaluate_opportunity_gate
 from radar.persona_builder import build_persona
 from radar.scoring import score_opportunity

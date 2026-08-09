@@ -8,7 +8,6 @@ import yaml
 
 from radar.evidence import EvidenceItem
 
-
 _GENERIC_CONTRAST_WORDS = {"but", "但是", "不过"}
 _REQUIRED_SIGNAL_GROUPS = (
     "workarounds",
@@ -74,11 +73,11 @@ def load_voc_config(path: str | Path) -> tuple[dict[str, list[str]], dict[str, l
         except yaml.YAMLError as exc:
             raise ValueError(f"invalid YAML in VOC config: {exc}") from exc
     if not isinstance(data, Mapping):
-        raise ValueError("top-level YAML must be a mapping")
+        raise ValueError("top-level YAML must be a mapping")  # noqa: TRY004
 
     taxonomy = data.get("taxonomy")
     if not isinstance(taxonomy, Mapping):
-        raise ValueError("taxonomy must be a mapping")
+        raise ValueError("taxonomy must be a mapping")  # noqa: TRY004
 
     dimension_codes: set[str] = set()
     for name, words in taxonomy.items():

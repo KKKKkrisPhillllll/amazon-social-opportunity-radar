@@ -41,11 +41,8 @@ def _normalize_public_url(value: str) -> str | None:
         return None
 
     normalized_host = hostname.rstrip(".").casefold()
-    if (
-        normalized_host == "localhost"
-        or normalized_host.endswith(".localhost")
-        or normalized_host == "localhost.localdomain"
-        or normalized_host.endswith(".localdomain")
+    if normalized_host.endswith(
+        ("localhost", ".localhost", "localhost.localdomain", ".localdomain")
     ):
         return None
     try:

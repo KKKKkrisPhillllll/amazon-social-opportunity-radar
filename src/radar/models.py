@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-
 JOURNEY_STAGE_NAMES = ("发现需求", "搜索方案", "对比决策", "购买", "使用", "反馈")
 
 
