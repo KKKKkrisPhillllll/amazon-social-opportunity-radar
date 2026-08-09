@@ -22,3 +22,7 @@ praw_reddit:
 amazon_reviews:
   primary_script_env: AMAZON_REVIEW_PRIMARY_SCRIPT
   backup_script_env: AMAZON_REVIEW_BACKUP_SCRIPT
+persona_journey:
+  min_opportunity_score: 60
+  max_opportunities_per_report: 3
+  min_evidence_count: 2
