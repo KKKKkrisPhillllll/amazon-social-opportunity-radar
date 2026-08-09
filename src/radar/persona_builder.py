@@ -18,6 +18,8 @@ def _relevant_evidence(
     for item in evidence:
         if item.category != opportunity.category:
             continue
+        if not item.summary.strip():
+            continue
         normalized_url = _normalize_public_url(item.url)
         if normalized_url is None or normalized_url in seen_urls:
             continue
@@ -83,16 +85,25 @@ def build_persona(
     if confidence == "低" and PENDING_VALIDATION not in pain_points:
         pain_points = pain_points + (PENDING_VALIDATION,)
 
+    if confidence == "低":
+        scenario = core_goal = "证据不足，待验证"
+        purchase_triggers = concerns = ("证据不足，待验证",)
+    else:
+        scenario = f"围绕{opportunity.category}的真实使用场景"
+        core_goal = "在当前场景中更稳定、更省步骤地完成任务"
+        purchase_triggers = ("重复出现的使用摩擦",)
+        concerns = ("价格、耐用性、清洁维护和适配性",)
+
     return UserPersona(
         opportunity_title=opportunity.title,
         category=opportunity.category,
         opportunity_score=opportunity.total_score,
         behavioral_segment=segment,
-        scenario=f"围绕{opportunity.category}的真实使用场景",
-        core_goal="在当前场景中更稳定、更省步骤地完成任务",
+        scenario=scenario,
+        core_goal=core_goal,
         pain_points=tuple(pain_points),
-        purchase_triggers=("重复出现的使用摩擦",),
-        concerns=("价格、耐用性、清洁维护和适配性",),
+        purchase_triggers=purchase_triggers,
+        concerns=concerns,
         evidence=tuple(PersonaEvidence(item.platform, item.url, item.summary) for item in relevant),
         confidence=confidence,
     )

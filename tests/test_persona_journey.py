@@ -1,6 +1,9 @@
-from radar.journey_builder import JOURNEY_STAGES, build_journey
+import pytest
+
+from radar.journey_builder import build_journey
 from radar.persona_builder import build_persona
 from radar.evidence import EvidenceItem
+from radar.models import PersonaEvidence
 from test_helpers import (
     make_eligible_gate,
     make_low_evidence_gate,
@@ -21,7 +24,14 @@ def test_high_score_opportunity_gets_behavioral_persona_and_six_stages():
     assert persona.confidence in {"中", "高"}
     assert persona.behavioral_segment in {"小空间效率型", "一般任务型"}
     assert len(persona.evidence) == 2
-    assert [stage.name for stage in stages] == list(JOURNEY_STAGES)
+    assert [stage.name for stage in stages] == [
+        "发现需求",
+        "搜索方案",
+        "对比决策",
+        "购买",
+        "使用",
+        "反馈",
+    ]
 
 
 def test_insufficient_evidence_is_low_confidence_and_neutral():
@@ -35,6 +45,74 @@ def test_insufficient_evidence_is_low_confidence_and_neutral():
 
     assert persona.confidence == "低"
     assert any("待验证" in item for item in persona.pain_points)
+
+
+def test_blank_summaries_do_not_consume_evidence_quota_or_confidence():
+    opportunity = make_opportunity()
+    evidence = [
+        *make_two_platform_evidence(),
+        EvidenceItem("E-0003", "reddit", "https://reddit.example/3", "kitchen_storage", "   ", 0),
+        EvidenceItem("E-0004", "youtube", "https://youtube.example/4", "kitchen_storage", "", 0),
+    ]
+
+    persona = build_persona(opportunity, evidence, {}, make_eligible_gate())
+
+    assert persona.confidence == "中"
+    assert len(persona.evidence) == 2
+    assert all(item.summary.strip() for item in persona.evidence)
+
+
+def test_low_confidence_uses_neutral_unverified_persona_fields():
+    opportunity = make_opportunity()
+    voc = {"E-0001": ("空间占用",)}
+
+    persona = build_persona(
+        opportunity,
+        make_two_platform_evidence()[:1],
+        voc,
+        make_low_evidence_gate(),
+    )
+
+    assert persona.confidence == "低"
+    assert persona.scenario == "证据不足，待验证"
+    assert persona.core_goal == "证据不足，待验证"
+    assert persona.purchase_triggers == ("证据不足，待验证",)
+    assert persona.concerns == ("证据不足，待验证",)
+    assert persona.pain_points == ("空间占用", "证据不足，待验证")
+
+
+def test_non_eligible_gate_rejects_build_when_evidence_is_not_low_confidence():
+    opportunity = make_opportunity()
+    evidence = make_two_platform_evidence()
+    gate = make_low_evidence_gate()
+    gate = gate.__class__(False, 2, 2, False, (), ("需要人工复核",), "继续验证")
+
+    with pytest.raises(ValueError):
+        build_persona(opportunity, evidence, {}, gate)
+    with pytest.raises(ValueError):
+        build_journey(opportunity, evidence, {}, gate)
+
+
+def test_persona_evidence_contract_exposes_only_public_fields():
+    assert {field.name for field in PersonaEvidence.__dataclass_fields__.values()} == {
+        "platform",
+        "url",
+        "summary",
+    }
+    evidence = make_two_platform_evidence()
+    persona = build_persona(
+        make_opportunity(), evidence, {}, make_eligible_gate()
+    )
+
+    assert all(
+        set(item.__dict__) == {"platform", "url", "summary"}
+        for item in persona.evidence
+    )
+    assert not any(
+        field in item.__dict__
+        for item in persona.evidence
+        for field in ("author", "account", "comments", "review_text")
+    )
 
 
 def test_builders_filter_category_deduplicate_urls_and_cap_evidence():
