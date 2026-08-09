@@ -277,7 +277,7 @@ git commit -m "feat: 增加证据索引与VOC配置基础"
 - `classify_voc(items: Sequence[EvidenceItem], taxonomy: Mapping[str, Sequence[str]]) -> dict[str, tuple[str, ...]]`
 - `detect_innovation_signals(items: Sequence[EvidenceItem], words: Mapping[str, Sequence[str]]) -> dict[str, tuple[str, ...]]`
 - `load_voc_config(path: str | Path) -> tuple[dict[str, list[str]], dict[str, list[str]]]`
-- `VOCResult` 使用 `evidence_id -> themes`，不得覆盖原始文本。
+- 返回值只保留 `evidence_id -> themes/signals`，不得复制或覆盖证据原文。
 - 英文关键词使用词边界；中文关键词使用包含匹配；空词一律忽略。
 
 - [ ] **Step 1: Write the failing test**
@@ -293,14 +293,13 @@ def test_voc_classifies_space_and_cleaning_without_changing_text():
         platform="reddit",
         url="https://reddit.example/post-1",
         category="kitchen_storage",
-        title="",
-        text="台面空间太小，而且很难清洁。",
-        comments=(),
+        summary="台面空间太小，而且很难清洁。",
+        comment_count=0,
     )
     themes = classify_voc([item], {"D06_空间占用": ["空间"], "D12_清洁维护": ["清洁"]})
 
     assert themes["E-0001"] == ("D06_空间占用", "D12_清洁维护")
-    assert item.text == "台面空间太小，而且很难清洁。"
+    assert item.summary == "台面空间太小，而且很难清洁。"
 
 
 def test_counter_evidence_is_separate_from_pain_signal():
@@ -309,9 +308,8 @@ def test_counter_evidence_is_separate_from_pain_signal():
         platform="reddit",
         url="https://reddit.example/post-2",
         category="kitchen_storage",
-        title="",
-        text="这个方案没问题，不需要更换。",
-        comments=(),
+        summary="这个方案没问题，不需要更换。",
+        comment_count=0,
     )
     signals = detect_innovation_signals([item], {"counter_evidence": ["没问题"]})
 
@@ -349,7 +347,7 @@ def classify_voc(
 ) -> dict[str, tuple[str, ...]]:
     result: dict[str, tuple[str, ...]] = {}
     for item in items:
-        text = " ".join((item.title, item.text, *item.comments))
+        text = item.summary
         result[item.evidence_id] = tuple(
             dimension for dimension, words in taxonomy.items() if any(_hit(text, word) for word in words)
         )
@@ -362,7 +360,7 @@ def detect_innovation_signals(
 ) -> dict[str, tuple[str, ...]]:
     result: dict[str, list[str]] = {name: [] for name in words}
     for item in items:
-        text = " ".join((item.title, item.text, *item.comments))
+        text = item.summary
         for name, candidates in words.items():
             if any(_hit(text, word) for word in candidates):
                 result[name].append(item.evidence_id)
