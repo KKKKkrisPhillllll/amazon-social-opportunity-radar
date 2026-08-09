@@ -116,8 +116,15 @@ workarounds:
 tradeoffs:
   - 但是
   - 不过
+  - but
+  - however
+  - although
   - 代价
   - trade-off
+  - 优点
+  - 缺点
+  - pros
+  - cons
 over_served:
   - 过度设计
   - 用不到
