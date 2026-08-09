@@ -11,10 +11,27 @@
         ↓
 产品机会评分
         ↓
+机会门槛 / 用户画像 / 六阶段用户旅程
+        ↓
 产品建议 / 改款建议 / 新品灵感
         ↓
 本地 Markdown 日报 / 显式飞书推送
 ```
+
+## 用户研究输出
+
+研究层只解释和筛选已完成评分的机会，不会修改机会总分。达到 60 分、通过公开证据门槛且最多排名前 3 的机会，才会生成行为型用户画像与旅程；59 分及以下机会不会生成画像。证据不足 2 条时，画像和旅程会标记为低置信度并提示待验证。
+
+日报中的旅程使用 Mermaid 展示以下六阶段：
+
+```mermaid
+flowchart LR
+    A[发现需求] --> B[搜索方案] --> C[对比决策] --> D[购买] --> E[使用] --> F[反馈]
+```
+
+六阶段顺序：发现需求 -> 搜索方案 -> 对比决策 -> 购买 -> 使用 -> 反馈。
+
+画像只保留平台、公开 URL 和摘要，不包含作者、账号或其他个人身份字段。日报会列出公开证据链接；链接仅用于回溯采集到的线索，不能单独证明真实市场需求或产品可行性。
 
 ## 安装
 
@@ -42,21 +59,24 @@ $env:FEISHU_WEBHOOK_URL="飞书机器人 Webhook"
 样例模式只验证本地链路，不产生真实业务结论，也不能发送飞书：
 
 ```powershell
-$env:PYTHONPATH="src"
-py -3 -m radar.cli --dry-run --use-sample-data
+cd E:\vscode\amazon-social-opportunity-radar
+$env:PYTHONPATH='src'
+py -3 -m radar.cli --use-sample-data --output-dir outputs
 ```
+
+样例报告会写入 `outputs/radar_report_YYYY_MM_DD.md`；其中的名称、分数、证据 URL 和文案均为链路测试数据，不是实际市场结论。
 
 真实模式默认只写入本地 `outputs/radar_report_YYYY_MM_DD.md`，不会发送飞书：
 
 ```powershell
-$env:PYTHONPATH="src"
+$env:PYTHONPATH='src'
 py -3 -m radar.cli --max-keywords-per-category 1 --amazon-review-asin B0D3XTZVS5
 ```
 
 确认本地报告后，使用显式开关发送飞书：
 
 ```powershell
-$env:PYTHONPATH="src"
+$env:PYTHONPATH='src'
 py -3 -m radar.cli --send-feishu --max-keywords-per-category 1
 ```
 
@@ -71,9 +91,9 @@ py -3 -m radar.cli --send-feishu --max-keywords-per-category 1
 ## 验证
 
 ```powershell
-$env:PYTHONPATH="src"
-py -3 -m pytest -v
-py -3 -m compileall -q src
+$env:PYTHONPATH='src'
+py -3 -m pytest -q
+py -3 -m compileall -q src tests
 py -3 -m pip check
-uvx pip-audit --requirement requirements.txt
+git diff --check
 ```

@@ -1,55 +1,39 @@
-# 雷达 MVP 验收记录
+# 用户研究能力验证记录
 
-日期：2026-08-02
+日期：2026-08-09
 
-## 已完成范围
+## 验证范围
 
-- 小红书 Apify 搜索契约与字段映射。
-- Instagram、TikTok、YouTube、Reddit 的 ScrapeCreators 专用端点。
-- PRAW 只读 Reddit 后备来源。
-- 跨来源 URL / 内容指纹去重、来源健康状态和安全诊断。
-- 亚马逊评论主脚本与备用脚本的条件调度。
-- 中文 Markdown 日报、证据链接、数据完整性提示与本地文件输出。
-- 仅在 `--send-feishu` 时发送飞书，并校验 20KB 请求体上限和业务返回码。
-- MIT 许可、中文 README、每日 PowerShell 入口和本地 GitHub Actions CI 配置。
+- 保留原有机会评分、采集健康状态、飞书显式发送和缺凭据降级行为。
+- 验证研究层只筛选高分机会：60 分可进入候选，59 分不生成画像，每日报告最多 3 个画像/旅程。
+- 验证画像/旅程使用公开证据链接，少于 2 条有效 URL 时标记低置信度并提示待验证；画像不保存个人身份字段。
+- 验证日报包含六阶段 Mermaid：发现需求、搜索方案、对比决策、购买、使用、反馈。
 
 ## 本地验证结果
 
 | 检查项 | 结果 |
 | --- | --- |
-| 单元测试 | 45 项通过 |
-| 静态检查 | `ruff check .` 通过 |
-| 编译检查 | `python -m compileall -q src` 通过 |
-| 依赖一致性 | `python -m pip check` 通过 |
-| 漏洞扫描 | `pip-audit --requirement requirements.txt` 未发现已知漏洞 |
-| GitHub Actions 配置 | 本地 `ci.yml` 已验证为合法 YAML；远端发布需要 Token 的 `workflow` scope |
-| 样例 CLI | `--dry-run --use-sample-data` 通过 |
-| 无凭据真实 CLI | 正常生成本地报告，数据源显示 `NOT_CONFIGURED` |
-| 凭据与路径泄露扫描 | 未发现本机私有路径或真实 Webhook |
+| 单元测试 | `py -3 -m pytest -q`：103 项通过，耗时 4.16 秒。 |
+| 编译检查 | `py -3 -m compileall -q src tests`：通过。 |
+| Git 差异检查 | `git diff --check`：通过，无空白错误；仅提示 Git 的 LF/CRLF 工作区转换。 |
+| 静态检查 | `ruff` 当前未安装，未执行；不会将其记为通过。 |
+| 样例 CLI | `$env:PYTHONPATH='src'; py -3 -m radar.cli --use-sample-data --output-dir outputs`：通过，生成 `outputs/radar_report_2026_08_09.md`。 |
 
-## 凭据状态
+## 凭据与样例边界
 
-本次只检查是否配置，未读取或输出任何值。以下变量均未配置：
+本次验证不配置真实 API 凭据。`APIFY_TOKEN`、`SCRAPECREATORS_API_KEY`、`REDDIT_CLIENT_ID`、`REDDIT_CLIENT_SECRET`、`REDDIT_USER_AGENT`、评论脚本路径和 `FEISHU_WEBHOOK_URL` 均按未配置处理，因此不发起真实社媒、Reddit、亚马逊评论或飞书请求。
 
-- `APIFY_TOKEN`
-- `SCRAPECREATORS_API_KEY`
-- `REDDIT_CLIENT_ID`
-- `REDDIT_CLIENT_SECRET`
-- `REDDIT_USER_AGENT`
-- `FEISHU_WEBHOOK_URL`
-- `AMAZON_REVIEW_PRIMARY_SCRIPT`
-- `AMAZON_REVIEW_BACKUP_SCRIPT`
+样例 CLI 使用内置测试数据，只用于验证本地报告链路。样例报告中的机会、分数、证据 URL 和画像/旅程结论不代表真实市场需求、市场热度或产品立项结论。
 
-因此本次没有发起真实社媒、Reddit、亚马逊评论或飞书网络请求，也没有产生外部服务费用。
+## 研究层回归护栏
 
-## 尚未进行的外部验证
+- 评分护栏：执行画像、旅程和机会门槛后，原机会的 `score_breakdown` 与 `total_score` 保持不变。
+- 候选护栏：研究层只处理总分至少 60 且通过门槛的机会，并按配置限制每日报告至多 3 个。
+- 证据护栏：少于 2 条有效 URL 时为低置信度，未观察到的阶段标为待后续采集验证。
+- 隐私护栏：画像证据仅包含 `platform`、`url`、`summary`，不包含作者、账号、用户 ID、邮箱或评论正文等个人身份字段。
 
-- 使用真实 Apify、ScrapeCreators 和 Reddit 凭据验证各供应商当前返回字段。
-- 使用真实飞书 Webhook 验证消息实际送达。
-- 在 Windows 任务计划程序中实际运行 `scripts/run_daily.ps1`。
+样例 CLI 报告包含 1 个总分 73 的机会和 1 条公开社媒 URL。由于它不满足至少 2 条证据和 2 个独立来源的门槛，输出 0 个画像、0 个旅程和 0 个 Mermaid 图；没有把低证据样例误写成已验证用户画像。低置信度与待验证文案由全量测试中的单证据画像/旅程场景覆盖并通过。
 
-这些项目需要相应凭据和外部服务可用，代码已在缺凭据时安全降级，不会以样例数据冒充真实结果。
+## 待补充的外部验证
 
-## GitHub 同步限制
-
-当前 GitHub Token 具备仓库写入权限，但没有 `workflow` scope，且 Git HTTPS 传输被当前网络重置。因此远端同步时不能发布 `.github/workflows/ci.yml`；其余可执行代码、配置、测试、README、许可和验收记录可以通过 GitHub API 安全同步。网络恢复并完成 `workflow` 授权后，再补传该 CI 文件即可。
+真实 API 凭据、供应商接口字段与飞书实际送达均未在本次本地回归中验证；这些检查需要用户显式配置相应凭据后单独执行。

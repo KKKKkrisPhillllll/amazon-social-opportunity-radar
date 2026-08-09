@@ -42,6 +42,38 @@ def test_run_configured_sources_returns_not_configured_without_credentials(monke
     assert {item.health for item in source_runs} == {SourceHealth.NOT_CONFIGURED}
 
 
+def test_persona_settings_do_not_change_unconfigured_collection_behavior(monkeypatch):
+    for name in (
+        "APIFY_TOKEN",
+        "SCRAPECREATORS_API_KEY",
+        "REDDIT_CLIENT_ID",
+        "REDDIT_CLIENT_SECRET",
+        "REDDIT_USER_AGENT",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    baseline = run_configured_sources(
+        _settings(), {"kitchen_storage": ["kitchen storage"]}, max_keywords_per_category=1
+    )
+    research_enabled_settings = _settings()
+    research_enabled_settings["persona_journey"] = {
+        "min_opportunity_score": 60,
+        "max_opportunities_per_report": 3,
+        "min_evidence_count": 2,
+    }
+
+    with_research_settings = run_configured_sources(
+        research_enabled_settings,
+        {"kitchen_storage": ["kitchen storage"]},
+        max_keywords_per_category=1,
+    )
+
+    assert with_research_settings[0] == baseline[0]
+    assert with_research_settings[1] == baseline[1]
+    assert [item.health for item in with_research_settings[2]] == [
+        item.health for item in baseline[2]
+    ]
+
+
 def test_run_configured_sources_deduplicates_results_and_uses_praw_fallback(monkeypatch):
     monkeypatch.setenv("APIFY_TOKEN", "token")
     monkeypatch.delenv("SCRAPECREATORS_API_KEY", raising=False)
