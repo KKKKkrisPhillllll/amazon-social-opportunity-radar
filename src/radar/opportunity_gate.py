@@ -25,7 +25,11 @@ def evaluate_opportunity_gate(
     signals: Mapping[str, tuple[str, ...]],
     min_evidence_count: int = 2,
 ) -> OpportunityGate:
-    relevant = [item for item in evidence if item.category == opportunity.category]
+    relevant_by_id: dict[str, EvidenceItem] = {}
+    for item in evidence:
+        if item.category == opportunity.category:
+            relevant_by_id.setdefault(item.evidence_id, item)
+    relevant = tuple(relevant_by_id.values())
     relevant_ids = {item.evidence_id for item in relevant}
     platforms = {item.platform for item in relevant}
 

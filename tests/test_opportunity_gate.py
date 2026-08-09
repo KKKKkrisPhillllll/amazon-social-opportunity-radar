@@ -91,3 +91,37 @@ def test_gate_counter_evidence_is_a_risk_not_an_exclusion():
     assert gate.eligible is True
     assert gate.has_counter_evidence is True
     assert any("反向证据" in gap for gap in gate.gaps)
+
+def test_gate_deduplicates_same_evidence_id_across_platforms():
+    evidence = [_evidence("E-DUP", "reddit"), _evidence("E-DUP", "youtube")]
+
+    gate = evaluate_opportunity_gate(
+        make_opportunity(total_score=75),
+        evidence,
+        {},
+        {},
+        min_evidence_count=2,
+    )
+
+    assert gate.eligible is False
+    assert gate.evidence_count == 1
+    assert gate.independent_source_count == 1
+
+
+def test_gate_accepts_exact_score_and_minimum_evidence_without_mutating_score():
+    opportunity = make_opportunity(total_score=60)
+    score_breakdown_before = opportunity.score_breakdown.copy()
+    total_score_before = opportunity.total_score
+
+    gate = evaluate_opportunity_gate(
+        opportunity,
+        [_evidence("E-0001", "reddit"), _evidence("E-0002", "youtube")],
+        {},
+        {},
+        min_evidence_count=2,
+    )
+
+    assert gate.eligible is True
+    assert gate.evidence_count == 2
+    assert opportunity.score_breakdown == score_breakdown_before
+    assert opportunity.total_score == total_score_before
