@@ -4,6 +4,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 
+JOURNEY_STAGE_NAMES = ("发现需求", "搜索方案", "对比决策", "购买", "使用", "反馈")
+
+
 class SourceHealth(str, Enum):
     OK = "OK"
     PARTIAL = "PARTIAL"
@@ -112,6 +115,10 @@ class JourneyStage:
     product_implication: str
     evidence_urls: tuple[str, ...]
     confidence: str
+
+    def __post_init__(self) -> None:
+        if self.name not in JOURNEY_STAGE_NAMES:
+            raise ValueError(f"unknown journey stage: {self.name}")
 
 
 @dataclass(frozen=True)
