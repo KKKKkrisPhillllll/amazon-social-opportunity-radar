@@ -7,6 +7,56 @@ import pytest
 
 from radar.cli import main
 from radar.models import SocialRecord, SourceHealth, SourceRun
+from radar.reports import build_daily_markdown
+
+
+def test_cli_builds_persona_journeys_only_for_gate_qualified_opportunities(
+    monkeypatch, tmp_path
+):
+    records = [
+        SocialRecord(
+            platform="reddit",
+            keyword="\u53a8\u623f\u6536\u7eb3",
+            url="https://reddit.example/1",
+            title="\u7a7a\u95f4\u95ee\u9898",
+            text="storage organizer hard to clean not durable broke",
+            engagement={"likes": 500, "favorites": 100, "comments": 50},
+        ),
+        SocialRecord(
+            platform="youtube",
+            keyword="\u53a8\u623f\u6536\u7eb3",
+            url="https://youtube.example/2",
+            title="\u6536\u7eb3\u65b9\u6848",
+            text="storage organizer hard to clean not durable broke",
+            engagement={"likes": 500, "favorites": 100, "comments": 50},
+        ),
+    ]
+
+    monkeypatch.setattr(
+        "radar.cli.run_configured_sources",
+        lambda *args, **kwargs: (
+            {"kitchen_storage": records},
+            [],
+            [SourceRun("test", "social", tuple(records), SourceHealth.OK, 2)],
+        ),
+    )
+
+    captured = {}
+
+    def capture_persona_journeys(**kwargs):
+        captured["persona_journeys"] = kwargs["persona_journeys"]
+        return build_daily_markdown(**kwargs)
+
+    monkeypatch.setattr("radar.cli.build_daily_markdown", capture_persona_journeys)
+    exit_code = main(
+        ["--output-dir", str(tmp_path), "--report-date", "2026-08-09"]
+    )
+
+    report = (tmp_path / "radar_report_2026_08_09.md").read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert "## \u7528\u6237\u753b\u50cf\u4e0e\u7528\u6237\u65c5\u7a0b\u56fe" in report
+    assert "```mermaid" in report
+    assert all(result.gate_eligible for result in captured["persona_journeys"])
 
 
 def test_cli_dry_run_prints_report(capsys):
@@ -16,6 +66,8 @@ def test_cli_dry_run_prints_report(capsys):
     assert exit_code == 0
     assert "# 亚马逊社媒产品机会雷达" in captured.out
     assert "数据源健康状态" in captured.out
+    assert "## 用户画像与用户旅程图" not in captured.out
+    assert "```mermaid" not in captured.out
 
 
 def test_cli_subprocess_dry_run_uses_project_src_path():

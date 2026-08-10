@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+JOURNEY_STAGE_NAMES = ("发现需求", "搜索方案", "对比决策", "购买", "使用", "反馈")
+
 
 class SourceHealth(str, Enum):
     OK = "OK"
@@ -62,6 +64,8 @@ class ReviewRecord:
 
 @dataclass(frozen=True)
 class Opportunity:
+    """A scored opportunity; downstream gates must not mutate its score."""
+
     title: str
     category: str
     source_platforms: list[str]
@@ -78,3 +82,46 @@ class Opportunity:
     @property
     def total_score(self) -> int:
         return sum(self.score_breakdown.values())
+
+
+@dataclass(frozen=True)
+class PersonaEvidence:
+    platform: str
+    url: str
+    summary: str
+
+
+@dataclass(frozen=True)
+class UserPersona:
+    opportunity_title: str
+    category: str
+    opportunity_score: int
+    behavioral_segment: str
+    scenario: str
+    core_goal: str
+    pain_points: tuple[str, ...]
+    purchase_triggers: tuple[str, ...]
+    concerns: tuple[str, ...]
+    evidence: tuple[PersonaEvidence, ...]
+    confidence: str
+
+
+@dataclass(frozen=True)
+class JourneyStage:
+    name: str
+    observed_signals: tuple[str, ...]
+    user_need_or_action: str
+    product_implication: str
+    evidence_urls: tuple[str, ...]
+    confidence: str
+
+    def __post_init__(self) -> None:
+        if self.name not in JOURNEY_STAGE_NAMES:
+            raise ValueError(f"unknown journey stage: {self.name}")
+
+
+@dataclass(frozen=True)
+class PersonaJourneyResult:
+    persona: UserPersona
+    stages: tuple[JourneyStage, ...]
+    gate_eligible: bool = True

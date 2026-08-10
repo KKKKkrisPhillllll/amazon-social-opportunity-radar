@@ -1,0 +1,141 @@
+taxonomy:
+  D01_功能有效性:
+    - 功能
+    - 有效
+    - works
+    - work
+  D02_性能表现:
+    - 性能
+    - 速度
+    - performance
+  D03_可靠耐用:
+    - 耐用
+    - 可靠
+    - 坏了
+    - broke
+  D04_尺寸适配:
+    - 尺寸
+    - 太大
+    - 太小
+    - fit
+  D05_安装使用:
+    - 安装
+    - 使用
+    - install
+    - setup
+  D06_空间占用:
+    - 空间
+    - 拥挤
+    - 占地方
+    - space
+  D07_收纳组织:
+    - 收纳
+    - 整理
+    - organization
+    - organize
+  D08_外观设计:
+    - 外观
+    - 设计
+    - design
+    - look
+  D09_材质做工:
+    - 材质
+    - 做工
+    - material
+    - quality
+  D10_价格价值:
+    - 价格
+    - 性价比
+    - 便宜
+    - price
+    - value
+  D11_物流包装:
+    - 物流
+    - 包装
+    - shipping
+    - packaging
+  D12_清洁维护:
+    - 清洁
+    - 难洗
+    - 难清洁
+    - clean
+    - cleaning
+  D13_安全风险:
+    - 安全
+    - 风险
+    - 危险
+    - safe
+  D14_兼容整合:
+    - 兼容
+    - 配件
+    - compatible
+  D15_容量效率:
+    - 容量
+    - 效率
+    - capacity
+    - efficient
+  D16_噪音气味:
+    - 噪音
+    - 气味
+    - smell
+    - noise
+  D17_可持续性:
+    - 环保
+    - 可持续
+    - reusable
+    - sustainable
+  D18_购买决策:
+    - 购买
+    - 下单
+    - buy
+    - purchase
+  D19_替代方案:
+    - 替代
+    - 代替
+    - alternative
+  D20_情绪体验:
+    - 满意
+    - 失望
+    - frustrated
+    - happy
+  D21_售前咨询:
+    - 咨询
+    - 问题
+    - question
+    - support
+  D22_售后退换:
+    - 退货
+    - 换货
+    - 售后
+    - return
+    - refund
+workarounds:
+  - 自制
+  - DIY
+  - workaround
+tradeoffs:
+  - 但是
+  - 不过
+  - but
+  - however
+  - although
+  - 代价
+  - trade-off
+  - 优点
+  - 缺点
+  - pros
+  - cons
+over_served:
+  - 过度设计
+  - 用不到
+  - unnecessary
+extreme_users:
+  - 每天
+  - 高频
+  - 重度
+  - every day
+counter_evidence:
+  - 没问题
+  - 不需要更换
+  - works fine
+  - no problem

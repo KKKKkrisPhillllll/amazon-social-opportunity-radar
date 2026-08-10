@@ -26,6 +26,60 @@ def test_load_source_settings_uses_environment_variable_names_only():
     assert data["praw_reddit"]["client_id_env"] == "REDDIT_CLIENT_ID"
 
 
+def test_load_source_settings_accepts_positive_persona_journey_limits(tmp_path):
+    path = tmp_path / "sources.yaml"
+    path.write_text(
+        """feishu: {}
+apify: {}
+scrapecreators: {}
+praw_reddit: {}
+amazon_reviews: {}
+persona_journey:
+  min_opportunity_score: 1
+  max_opportunities_per_report: 2
+  min_evidence_count: 3
+""",
+        encoding="utf-8",
+    )
+
+    assert load_source_settings(path)["persona_journey"]["min_evidence_count"] == 3
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("min_opportunity_score", 0),
+        ("max_opportunities_per_report", -1),
+        ("min_evidence_count", True),
+        ("min_evidence_count", "2"),
+    ],
+)
+def test_load_source_settings_rejects_invalid_persona_journey_limits(tmp_path, field, value):
+    values = {
+        "min_opportunity_score": 60,
+        "max_opportunities_per_report": 3,
+        "min_evidence_count": 2,
+    }
+    values[field] = value
+    path = tmp_path / "sources.yaml"
+    path.write_text(
+        """feishu: {{}}
+apify: {{}}
+scrapecreators: {{}}
+praw_reddit: {{}}
+amazon_reviews: {{}}
+persona_journey:
+  min_opportunity_score: {min_opportunity_score!r}
+  max_opportunities_per_report: {max_opportunities_per_report!r}
+  min_evidence_count: {min_evidence_count!r}
+""".format(**values),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="persona_journey"):
+        load_source_settings(path)
+
+
 def test_require_env_raises_clear_error(monkeypatch):
     monkeypatch.delenv("FEISHU_WEBHOOK_URL", raising=False)
 
